@@ -2,5 +2,5 @@
 
 (async function () {
     const { run } = await import("../src/index")
-    await run()
+    await run(process.argv)
 })().catch(console.error)

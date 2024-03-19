@@ -38,8 +38,11 @@
   "devDependencies": {
     "@swc/cli": "^0.3.10",
     "@swc/core": "^1.4.8",
+    "@types/mocha": "^10.0.6",
     "@types/node": "^20.11.29",
     "@types/yargs": "^17.0.32",
+    "fancy-test": "^3.0.14",
+    "mocha": "^10.3.0",
     "shx": "^0.3.4",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.2"

@@ -2,5 +2,5 @@
 
 (async function () {
     const { run } = await import("../dist/index.js")
-    await run()
+    await run(process.argv)
 })().catch(console.error)
