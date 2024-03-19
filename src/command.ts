@@ -1,3 +1,3 @@
-export async function run(argv: string[]) : Promise<void> {
+export async function run() : Promise<void> {
     process.stdout.write("hello world\n")
 }

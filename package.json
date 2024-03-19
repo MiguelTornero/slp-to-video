@@ -7,9 +7,13 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "shx rm -rf dist && tsc -b",
-    "dev": "ts-node --swc src"
+    "prepack": "npm run build",
+    "prepare": "npm run build"
   },
-  "repository": {
+  "bin": {
+    "slp-to-video": "./bin/run.js"
+  },
+  "reposito ry": {
     "type": "git",
     "url": "git+https://github.com/MiguelTornero/slp-to-video.git"
   },
@@ -26,12 +30,21 @@
     "url": "https://github.com/MiguelTornero/slp-to-video/issues"
   },
   "homepage": "https://github.com/MiguelTornero/slp-to-video#readme",
+  "files": [
+    "/bin",
+    "/dist",
+    "/oclif.manifest.json"
+  ],
   "devDependencies": {
     "@swc/cli": "^0.3.10",
     "@swc/core": "^1.4.8",
     "@types/node": "^20.11.29",
+    "@types/yargs": "^17.0.32",
     "shx": "^0.3.4",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.2"
+  },
+  "dependencies": {
+    "yargs": "^17.7.2"
   }
 }
