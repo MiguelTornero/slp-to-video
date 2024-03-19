@@ -1,0 +1,37 @@
+{
+  "name": "slp-to-video",
+  "version": "1.0.0",
+  "description": "CLI tool for converting Slippi SLP files to video (without the use of OBS)",
+  "main": "./dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "shx rm -rf dist && tsc -b",
+    "dev": "ts-node --swc src"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MiguelTornero/slp-to-video.git"
+  },
+  "keywords": [
+    "slp",
+    "slippi",
+    "video",
+    "super smash bros melee",
+    "melee"
+  ],
+  "author": "Miguel Tornero",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/MiguelTornero/slp-to-video/issues"
+  },
+  "homepage": "https://github.com/MiguelTornero/slp-to-video#readme",
+  "devDependencies": {
+    "@swc/cli": "^0.3.10",
+    "@swc/core": "^1.4.8",
+    "@types/node": "^20.11.29",
+    "shx": "^0.3.4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.2"
+  }
+}
