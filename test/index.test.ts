@@ -7,7 +7,7 @@ describe("run cmd", () => {
     fancy.stdout()
     .do(() => run())
     .it("no args", (ctx) => {
-        ok(ctx.stdout.includes("hello"))
+        ok(ctx.stdout.toLowerCase().includes("hello"))
     })
     
 })

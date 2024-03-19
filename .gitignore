@@ -8,3 +8,4 @@
 /yarn.lock
 node_modules
 tsconfig.tsbuildinfo
+.cache

@@ -8,12 +8,13 @@
     "test": "mocha --forbid-only \"test/**/*.test.ts\"",
     "build": "shx rm -rf dist && tsc -b",
     "prepack": "npm run build",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "postinstall": "shx mkdir .cache"
   },
   "bin": {
     "slp-to-video": "./bin/run.js"
   },
-  "reposito ry": {
+  "repository": {
     "type": "git",
     "url": "git+https://github.com/MiguelTornero/slp-to-video.git"
   },
@@ -24,7 +25,7 @@
     "super smash bros melee",
     "melee"
   ],
-  "author": "Miguel Tornero",
+  "author": "MiguelTornero",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/MiguelTornero/slp-to-video/issues"
