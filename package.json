@@ -8,8 +8,7 @@
     "test": "mocha --forbid-only \"test/**/*.test.ts\"",
     "build": "shx rm -rf dist && tsc -b",
     "prepack": "npm run build",
-    "prepare": "npm run build",
-    "postinstall": "shx mkdir .cache"
+    "prepare": "npm run build"
   },
   "bin": {
     "slp-to-video": "./bin/run.js"

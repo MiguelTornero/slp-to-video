@@ -3,4 +3,7 @@
 (async function () {
     const { run } = await import("../src/index")
     await run(process.argv)
-})().catch(console.error)
+})().catch((e) => {
+    console.log(e)
+    process.exit(1)
+})
