@@ -2,7 +2,7 @@
 
 (async function () {
     const { run } = await import("../src/index")
-    await run(process.argv.slice(2), true)
+    await run(process.argv, true)
 })().catch((e) => {
     console.log(e)
     process.exit(1)

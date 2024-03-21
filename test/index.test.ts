@@ -1,13 +1,18 @@
-import { fancy } from "fancy-test"
 import { ok } from "node:assert"
 
-import { run } from "../src"
+import { spawnSync } from "node:child_process"
 
 describe("run cmd", () => {
-    fancy.stdout()
-    .do(() => run())
-    .it("no args", (ctx) => {
-        ok(ctx.stdout.toLowerCase().includes("hello"))
+
+    it("should show help on stderr", () => {
+        const cmd = spawnSync("./bin/dev.ts")
+        ok(!cmd.stdout.toString())
+        ok(!!cmd.stderr.toString())
     })
     
+    it("should show help on stdout", () => {
+        const cmd = spawnSync("./bin/dev.ts", ["-h"])
+        ok(!!cmd.stdout.toString())
+        ok(!cmd.stderr.toString())
+    })
 })
