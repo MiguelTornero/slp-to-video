@@ -16,3 +16,15 @@ export function getWorkDir(development = false, prefix = "slp-to-video-") {
 
     return mkdtempSync(join(_tempDir, prefix))
 }
+
+export function fillUndefinedFields<T extends Record<string, any>>(partialData: Partial<T>, data: T) : T {
+    const output = Object.assign({}, data)
+    for (const key in output) {
+        const val = partialData[key]
+        if (val !== undefined) {
+            output[key] = val
+        }
+    }
+
+    return output
+}
