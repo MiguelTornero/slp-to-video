@@ -1,20 +1,25 @@
-import { rm } from "fs/promises";
+import { access, constants, rm } from "fs/promises";
 import { getWorkDir } from "./common";
 import yargs = require("yargs");
 
 import { hideBin } from 'yargs/helpers'
+import { SlpToVideo } from "./slp-to-video";
+import { isAbsolute, join } from "path";
+import { cwd } from "process";
 
 interface Arguments {
     [x: string]: unknown,
-    h: boolean,
+    h?: boolean,
     slp_file: string,
+    i: string,
     _: (string|number)[]
 }
 
 async function parseArgv(argv : string[]) : Promise<Arguments> {
     return await yargs().command("$0 <slp_file>", "Converts SLP files to video files").options({
-        h: {type: "boolean", default: false, alias: "help"},
-        slp_file: {type: "string", demandOption: true, hidden: true} // needed for proper typescript type inference, hidden
+        h: {type: "boolean", alias: "help"},
+        slp_file: {type: "string", demandOption: true, hidden: true}, // same as first positional arg, needed for proper typescript type inference, hidden
+        i: {type: "string", alias: "iso", describe: "Path to the Melee ISO", demandOption: true}
     })
     .strict()
     .parse(argv)
@@ -27,12 +32,26 @@ export async function run(argv : string[] = [], development = false) : Promise<v
     try {
         const args : Arguments = await parseArgv(argv)
         const slp_file = args.slp_file
+        const dolphinPath = join(__dirname, "..", "assets", "playback.appimage") // TODO: change to adapt to different platforms (Win, Mac)
 
         workDir = getWorkDir(development)
 
         console.log("workdir:", workDir)
-        console.log("args:", args)
         console.log("slp file:", slp_file)
+        console.log("dolphin:", dolphinPath)
+
+        await access(dolphinPath, constants.R_OK | constants.X_OK)
+
+        let inputFile
+        if (isAbsolute(slp_file)) {
+            inputFile = slp_file
+        }
+        else {
+            inputFile = join(cwd(), slp_file)
+        }
+    
+
+        await SlpToVideo({dolphinPath: dolphinPath, inputFile: inputFile, workDir: workDir, meleeIso: args.i})
     }
     finally {
         console.log("cleaning up...")
