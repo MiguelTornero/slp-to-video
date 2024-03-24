@@ -82,7 +82,7 @@ const MAP_INTERNAL_RES_TO_EFB_SCALE : Record<ValidInternalResolution, number> = 
 }
 
 
-
+// TODO: refactor into a factory for a Process object
 export async function SlpToVideo(opts: Partial<SlpToVideoArguments> = {}) {
     const { workDir, inputFile, dolphinPath, meleeIso } = fillUndefinedFields(opts, DEFAULT_ARGUMENTS)
 
@@ -113,12 +113,13 @@ export async function SlpToVideo(opts: Partial<SlpToVideoArguments> = {}) {
         "--cout",
         "--hide-seekbar"
     ])
-    playbackProcess.stdout.pipe(process.stdout)
+    playbackProcess.stdout.pipe(process.stdout) // TODO: move this logic to command.ts
     playbackProcess.stdout.on("data", (msg: Buffer) => {
         if (msg.toString().startsWith("[NO_GAME]")) {
             playbackProcess.kill()
         }
     })
+    playbackProcess.stderr.pipe(process.stderr)
 
     await new Promise((res) => {
         playbackProcess.on("exit", (code) => res(code))

@@ -1,5 +1,5 @@
 import { access, constants, rm } from "fs/promises";
-import { getWorkDir } from "./common";
+import { getWorkDir, toAbsolutePath } from "./common";
 import yargs = require("yargs");
 
 import { hideBin } from 'yargs/helpers'
@@ -19,7 +19,7 @@ async function parseArgv(argv : string[]) : Promise<Arguments> {
     return await yargs().command("$0 <slp_file>", "Converts SLP files to video files").options({
         h: {type: "boolean", alias: "help"},
         slp_file: {type: "string", demandOption: true, hidden: true}, // same as first positional arg, needed for proper typescript type inference, hidden
-        i: {type: "string", alias: "iso", describe: "Path to the Melee ISO", demandOption: true}
+        i: {type: "string", alias: "iso", describe: "Path to the Melee ISO", default: "SSBM.iso"}
     })
     .strict()
     .parse(argv)
@@ -36,22 +36,17 @@ export async function run(argv : string[] = [], development = false) : Promise<v
 
         workDir = getWorkDir(development)
 
-        console.log("workdir:", workDir)
-        console.log("slp file:", slp_file)
-        console.log("dolphin:", dolphinPath)
-
         await access(dolphinPath, constants.R_OK | constants.X_OK)
 
-        let inputFile
-        if (isAbsolute(slp_file)) {
-            inputFile = slp_file
-        }
-        else {
-            inputFile = join(cwd(), slp_file)
-        }
-    
+        const inputFile = toAbsolutePath(slp_file, cwd())
+        const meleeIso = toAbsolutePath(args.i, cwd())
+        
+        console.log("workdir:", workDir)
+        console.log("slp file:", inputFile)
+        console.log("dolphin:", dolphinPath)
+        console.log("iso:", meleeIso)
 
-        await SlpToVideo({dolphinPath: dolphinPath, inputFile: inputFile, workDir: workDir, meleeIso: args.i})
+        await SlpToVideo({dolphinPath: dolphinPath, inputFile: inputFile, workDir: workDir, meleeIso: meleeIso})
     }
     finally {
         console.log("cleaning up...")

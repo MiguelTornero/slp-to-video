@@ -1,6 +1,6 @@
 import { mkdtempSync, existsSync, mkdirSync } from "node:fs"
 import { tmpdir } from "node:os"
-import { join } from "node:path"
+import { isAbsolute, join } from "node:path"
 
 export function getWorkDir(development = false, prefix = "slp-to-video-") {
     let _tempDir = ""
@@ -21,10 +21,17 @@ export function fillUndefinedFields<T extends Record<string, any>>(partialData: 
     const output = Object.assign({}, data)
     for (const key in output) {
         const val = partialData[key]
-        if (val !== undefined) {
+        if (val !== undefined && val !== null) {
             output[key] = val
         }
     }
 
     return output
+}
+
+export function toAbsolutePath(path: string, base: string) {
+    if (isAbsolute(path)) {
+        return path
+    }
+    return join(base, path)
 }
