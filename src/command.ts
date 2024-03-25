@@ -12,6 +12,7 @@ interface Arguments {
     h?: boolean,
     slp_file: string,
     i: string,
+    m?: number
     _: (string|number)[]
 }
 
@@ -19,7 +20,8 @@ async function parseArgv(argv : string[]) : Promise<Arguments> {
     return await yargs().command("$0 <slp_file>", "Converts SLP files to video files").options({
         h: {type: "boolean", alias: "help"},
         slp_file: {type: "string", demandOption: true, hidden: true}, // same as first positional arg, needed for proper typescript type inference, hidden
-        i: {type: "string", alias: "iso", describe: "Path to the Melee ISO", default: "SSBM.iso"}
+        i: {type: "string", alias: "iso", describe: "Path to the Melee ISO", default: "SSBM.iso"},
+        m: {type: "number", alias: "timeout", describe: "Maximum amount of miliseconds the Dolphin process is allowed to run"}
     })
     .strict()
     .parse(argv)
@@ -46,7 +48,7 @@ export async function run(argv : string[] = [], development = false) : Promise<v
         console.log("dolphin:", dolphinPath)
         console.log("iso:", meleeIso)
 
-        const slpProcess = createSlptoVideoProcess({dolphinPath: dolphinPath, inputFile: inputFile, workDir: workDir, meleeIso: meleeIso})
+        const slpProcess = createSlptoVideoProcess({dolphinPath: dolphinPath, inputFile: inputFile, workDir: workDir, meleeIso: meleeIso, timeout: args.m})
         slpProcess.stdout.pipe(process.stdout)
         slpProcess.stderr.pipe(process.stderr)
 

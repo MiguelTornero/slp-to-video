@@ -49,7 +49,10 @@ type SlpToVideoArguments = {
     outputFilename: string,
     outputFormat: "avi" | "mp4",
     enableWidescreen: boolean,
+    timeout: number
 }
+
+const TEN_MINUTES_MS = 10 * 60 * 1000
 
 const DEFAULT_ARGUMENTS : SlpToVideoArguments = {
     inputFile: "input.slp",
@@ -59,7 +62,8 @@ const DEFAULT_ARGUMENTS : SlpToVideoArguments = {
     internalResolution: "720p",
     outputFilename: "output.avi",
     outputFormat: "avi",
-    enableWidescreen: false
+    enableWidescreen: false,
+    timeout: TEN_MINUTES_MS
 }
 
 // used to get the EFBScale option for the INI file, might break in the future
@@ -84,7 +88,7 @@ const MAP_INTERNAL_RES_TO_EFB_SCALE : Record<ValidInternalResolution, number> = 
 
 // TODO: refactor into a factory for a Process object
 export function createSlptoVideoProcess(opts: Partial<SlpToVideoArguments> = {}) {
-    const { workDir, inputFile, dolphinPath, meleeIso } = fillUndefinedFields(opts, DEFAULT_ARGUMENTS)
+    const { workDir, inputFile, dolphinPath, meleeIso, timeout } = fillUndefinedFields(opts, DEFAULT_ARGUMENTS)
 
     const userDir = join(workDir, "User")
     const userConfigDir = join(userDir, "Config")
@@ -112,10 +116,10 @@ export function createSlptoVideoProcess(opts: Partial<SlpToVideoArguments> = {})
         "-b",
         "--cout",
         "--hide-seekbar"
-    ])
+    ], {timeout: timeout})
     playbackProcess.stdout.on("data", (msg: Buffer) => {
         if (msg.toString().startsWith("[NO_GAME]")) {
-            playbackProcess.kill()
+            playbackProcess.kill("SIGINT")
         }
     })
     
