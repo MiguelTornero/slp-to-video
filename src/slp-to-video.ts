@@ -1,7 +1,7 @@
-import { mkdir, writeFile } from "fs/promises"
 import { fillUndefinedFields } from "./common"
 import { join } from "path"
 import { spawn } from "child_process"
+import { mkdirSync, writeFileSync } from "fs"
 
 type JSONInputFileCommon = {
     replay?: string,
@@ -83,15 +83,15 @@ const MAP_INTERNAL_RES_TO_EFB_SCALE : Record<ValidInternalResolution, number> = 
 
 
 // TODO: refactor into a factory for a Process object
-export async function SlpToVideo(opts: Partial<SlpToVideoArguments> = {}) {
+export function createSlptoVideoProcess(opts: Partial<SlpToVideoArguments> = {}) {
     const { workDir, inputFile, dolphinPath, meleeIso } = fillUndefinedFields(opts, DEFAULT_ARGUMENTS)
 
     const userDir = join(workDir, "User")
     const userConfigDir = join(userDir, "Config")
     const userGameSettingsDir = join(userDir, "GameSettings")
     
-    await mkdir(userConfigDir, {recursive: true})
-    await mkdir(userGameSettingsDir, {recursive: true}) // "recursive: true" makes it so it doesn't throw an error if dir already exists
+    mkdirSync(userConfigDir, {recursive: true}) 
+    mkdirSync(userGameSettingsDir, {recursive: true}) // "recursive: true" makes it so it doesn't throw an error if dir already exists
 
     const inputJsonData : JSONInputFile = {
         mode: "queue",
@@ -103,7 +103,7 @@ export async function SlpToVideo(opts: Partial<SlpToVideoArguments> = {}) {
     }
 
     const inputJsonFile = join(workDir, "input.json")
-    await writeFile(inputJsonFile, JSON.stringify(inputJsonData))
+    writeFileSync(inputJsonFile, JSON.stringify(inputJsonData))
 
     const playbackProcess = spawn(dolphinPath, [
         "-u", userDir,
@@ -113,16 +113,11 @@ export async function SlpToVideo(opts: Partial<SlpToVideoArguments> = {}) {
         "--cout",
         "--hide-seekbar"
     ])
-    playbackProcess.stdout.pipe(process.stdout) // TODO: move this logic to command.ts
     playbackProcess.stdout.on("data", (msg: Buffer) => {
         if (msg.toString().startsWith("[NO_GAME]")) {
             playbackProcess.kill()
         }
     })
-    playbackProcess.stderr.pipe(process.stderr)
-
-    await new Promise((res) => {
-        playbackProcess.on("exit", (code) => res(code))
-    })
     
+    return playbackProcess
 }

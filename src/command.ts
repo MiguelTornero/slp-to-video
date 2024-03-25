@@ -3,8 +3,8 @@ import { getWorkDir, toAbsolutePath } from "./common";
 import yargs = require("yargs");
 
 import { hideBin } from 'yargs/helpers'
-import { SlpToVideo } from "./slp-to-video";
-import { isAbsolute, join } from "path";
+import { createSlptoVideoProcess } from "./slp-to-video";
+import { join } from "path";
 import { cwd } from "process";
 
 interface Arguments {
@@ -46,7 +46,16 @@ export async function run(argv : string[] = [], development = false) : Promise<v
         console.log("dolphin:", dolphinPath)
         console.log("iso:", meleeIso)
 
-        await SlpToVideo({dolphinPath: dolphinPath, inputFile: inputFile, workDir: workDir, meleeIso: meleeIso})
+        const slpProcess = createSlptoVideoProcess({dolphinPath: dolphinPath, inputFile: inputFile, workDir: workDir, meleeIso: meleeIso})
+        slpProcess.stdout.pipe(process.stdout)
+        slpProcess.stderr.pipe(process.stderr)
+
+
+        await new Promise((res) => {
+            slpProcess.on("exit", (code) => {
+                res(code)
+            })
+        })
     }
     finally {
         console.log("cleaning up...")
