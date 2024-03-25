@@ -48,16 +48,21 @@ export async function run(argv : string[] = [], development = false) : Promise<v
         console.log("dolphin:", dolphinPath)
         console.log("iso:", meleeIso)
 
-        const slpProcess = createSlptoVideoProcess({dolphinPath: dolphinPath, inputFile: inputFile, workDir: workDir, meleeIso: meleeIso, timeout: args.m})
-        slpProcess.stdout.pipe(process.stdout)
-        slpProcess.stderr.pipe(process.stderr)
+        const { dolphinProcess } = createSlptoVideoProcess({dolphinPath: dolphinPath, inputFile: inputFile, workDir: workDir, meleeIso: meleeIso, timeout: args.m})
+        
+        if (development) {
+            dolphinProcess.stdout.pipe(process.stdout)
+            dolphinProcess.stderr.pipe(process.stderr)
+        }
 
 
-        await new Promise((res) => {
-            slpProcess.on("exit", (code) => {
-                res(code)
-            })
+        const exitCode = await new Promise<number|null>((res) => {
+            dolphinProcess.on("exit", res)
         })
+
+        if (exitCode !== 0) {
+            console.error("Dolphin exited abnormally. This may be due to an invalid SLP or ISO file")
+        }
     }
     finally {
         console.log("cleaning up...")

@@ -1,6 +1,6 @@
 import { fillUndefinedFields } from "./common"
 import { join } from "path"
-import { spawn } from "child_process"
+import { ChildProcessWithoutNullStreams, spawn } from "child_process"
 import { mkdirSync, writeFileSync } from "fs"
 
 type JSONInputFileCommon = {
@@ -66,6 +66,14 @@ const DEFAULT_ARGUMENTS : SlpToVideoArguments = {
     timeout: TEN_MINUTES_MS
 }
 
+class SlpToVideoProcess {
+    dolphinProcess: ChildProcessWithoutNullStreams
+
+    constructor(dolphinProcess: ChildProcessWithoutNullStreams) {
+        this.dolphinProcess = dolphinProcess
+    }
+}
+
 // used to get the EFBScale option for the INI file, might break in the future
 const MAP_INTERNAL_RES_TO_EFB_SCALE : Record<ValidInternalResolution, number> = {
     "auto": 0,
@@ -123,5 +131,5 @@ export function createSlptoVideoProcess(opts: Partial<SlpToVideoArguments> = {})
         }
     })
     
-    return playbackProcess
+    return new SlpToVideoProcess(playbackProcess)
 }
