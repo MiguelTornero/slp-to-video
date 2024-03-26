@@ -18,7 +18,7 @@ export function getWorkDir(development = false, prefix = "slp-to-video-") {
 }
 
 export function fillUndefinedFields<T extends Record<string, any>>(partialData: Partial<T>, data: T) : T {
-    const output = Object.assign({}, data)
+    const output : T = Object.assign({}, data)
     for (const key in output) {
         const val = partialData[key]
         if (val !== undefined && val !== null) {
