@@ -52,9 +52,9 @@ type SlpToVideoArguments = {
     timeout: number
 }
 
-const TEN_MINUTES_MS = 10 * 60 * 1000
+const TEN_MINUTES_TO_MS = 10 * 60 * 1000
 
-const DEFAULT_ARGUMENTS : SlpToVideoArguments = {
+export const DEFAULT_ARGUMENTS : Readonly<SlpToVideoArguments> = {
     inputFile: "input.slp",
     workDir: ".",
     meleeIso: "SSBM.iso",
@@ -63,7 +63,7 @@ const DEFAULT_ARGUMENTS : SlpToVideoArguments = {
     outputFilename: "output.avi",
     outputFormat: "avi",
     enableWidescreen: false,
-    timeout: TEN_MINUTES_MS
+    timeout: TEN_MINUTES_TO_MS
 }
 
 class SlpToVideoProcess {
