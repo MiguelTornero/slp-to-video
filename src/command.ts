@@ -54,16 +54,17 @@ export async function run(argv : string[] = [], development = false) : Promise<v
         console.log("dolphin:", dolphinPath)
         console.log("iso:", meleeIso)
 
-        const { dolphinProcess } = createSlptoVideoProcess({dolphinPath: dolphinPath, inputFile: inputFile, workDir: workDir, meleeIso: meleeIso, timeout: args.m, outputFilename: args.o, enableWidescreen: args.w})
+        const { dolphinProcess, dolphinEventEmitter } = createSlptoVideoProcess({dolphinPath: dolphinPath, inputFile: inputFile, workDir: workDir, meleeIso: meleeIso, timeout: args.m, outputFilename: args.o, enableWidescreen: args.w})
         
         if (args.v) {
             dolphinProcess.stdout.pipe(process.stdout)
             dolphinProcess.stderr.pipe(process.stderr)
         }
 
+        dolphinEventEmitter.on("progress", console.log)
 
         const exitCode = await new Promise<number|null>((res) => {
-            dolphinProcess.on("exit", res)
+            dolphinEventEmitter.on("done", res)
         })
 
         if (exitCode !== 0) {

@@ -2,6 +2,7 @@ import { fillUndefinedFields } from "./common"
 import { join } from "path"
 import { ChildProcessWithoutNullStreams, spawn } from "child_process"
 import { copyFileSync, mkdirSync, writeFileSync } from "fs"
+import { EventEmitter } from "stream"
 
 type JSONInputFileCommon = {
     replay?: string,
@@ -66,84 +67,114 @@ export const DEFAULT_ARGUMENTS : Readonly<SlpToVideoArguments> = {
     timeout: TEN_MINUTES_TO_MS
 }
 
-class SlpToVideoProcess {
-    dolphinProcess: ChildProcessWithoutNullStreams
+declare interface ProcessEventEmmiter {
+    on(event: "progress", listener: (progress: number) => void): this
+    once(event: "progress", listener: (progress: number) => void): this
+    emit(event: "progress", progress: number): boolean
 
-    constructor(dolphinProcess: ChildProcessWithoutNullStreams) {
-        this.dolphinProcess = dolphinProcess
+    on(event: "done", listener: (code: number|null) => void): this
+    once(event: "done", listener: (code: number|null) => void): this
+    emit(event: "done", code: number|null): boolean
+}
+
+class ProcessEventEmmiter extends EventEmitter {
+    constructor() {
+        super()
     }
 }
 
-// used to get the EFBScale option for the INI file, might break in the future
-const MAP_INTERNAL_RES_TO_EFB_SCALE : Record<ValidInternalResolution, number> = {
-    "auto": 0,
-    "1x": 2,
-    "1.5x": 3,
-    "2x": 4,
-    "720p": 4,
-    "2.5x": 5,
-    "3x": 6,
-    "1080p": 6,
-    "4x": 7,
-    "WQHD": 7,
-    "5x": 8,
-    "6x": 9,
-    "4K": 9,
-    "7x": 10,
-    "8x": 11
-}
+class SlpToVideoProcess {
+    static dolphinIniFilename = "Dolphin.ini"
+    static gfxIniFilename = "GFX.ini"
+    static geckoFilename = "GALE01.ini"
 
-const AUDIO_DUMP_FILENAME = "dspdump.wav"
-const VIDEO_DUMP_FILENAME = "framedump0.avi"
+    static audioDumpFilename = "dspdump.wav"
+    static videoDumpFilename = "framedump0.avi"
+
+    // used to get the EFBScale option for the INI file, might break in the future
+    static internalResToEfbScale : Record<ValidInternalResolution, number> = {
+        "auto": 0,
+        "1x": 2,
+        "1.5x": 3,
+        "2x": 4,
+        "720p": 4,
+        "2.5x": 5,
+        "3x": 6,
+        "1080p": 6,
+        "4x": 7,
+        "WQHD": 7,
+        "5x": 8,
+        "6x": 9,
+        "4K": 9,
+        "7x": 10,
+        "8x": 11
+    }
+
+    dolphinProcess: ChildProcessWithoutNullStreams
+    dolphinEventEmitter: ProcessEventEmmiter
+
+    constructor(args: SlpToVideoArguments) {
+        const { workDir, inputFile, dolphinPath, meleeIso, timeout, enableWidescreen } = fillUndefinedFields(args, DEFAULT_ARGUMENTS)
+
+        const userDir = join(workDir, "User")
+        const userConfigDir = join(userDir, "Config")
+        
+        const assetDir = join(__dirname, "..", "assets")
+
+        mkdirSync(workDir, {recursive: true}) // "recursive: true" makes it so it doesn't throw an error if the dir exists
+
+        mkdirSync(userConfigDir, {recursive: true})
+        copyFileSync(join(assetDir, SlpToVideoProcess.dolphinIniFilename), join(userConfigDir, SlpToVideoProcess.dolphinIniFilename))
+        copyFileSync(join(assetDir, SlpToVideoProcess.gfxIniFilename), join(userConfigDir, SlpToVideoProcess.gfxIniFilename))
+
+        if (enableWidescreen) {
+            const userGameSettingsDir = join(userDir, "GameSettings")
+    
+            mkdirSync(userGameSettingsDir, {recursive: true})
+            copyFileSync(join(assetDir, SlpToVideoProcess.geckoFilename), join(userGameSettingsDir, SlpToVideoProcess.geckoFilename))
+        }
+
+        const inputJsonData : JSONInputFile = {
+            mode: "queue",
+            queue: [
+                {
+                    path: inputFile
+                }
+            ]
+        }
+    
+        const inputJsonFile = join(workDir, "input.json")
+        writeFileSync(inputJsonFile, JSON.stringify(inputJsonData))
+
+        this.dolphinEventEmitter = new ProcessEventEmmiter()
+        this.dolphinProcess = spawn(dolphinPath, [
+            "-u", userDir,
+            "--output-directory", workDir,
+            "-i", inputJsonFile,
+            "-e", meleeIso,
+            "-b",
+            "--cout",
+            "--hide-seekbar"
+        ], {timeout: timeout})
+        this.dolphinProcess.stdout.on("data", (msg: Buffer) => {
+            const msgStr = msg.toString()
+            if (msgStr.startsWith("[NO_GAME]")) {
+                this.dolphinProcess.kill()
+                return
+            }
+
+            const match = msgStr.match(/\[CURRENT_FRAME\]\s+(\d+)/)
+            if (match) {
+                const frame =  parseInt(match[1])
+                this.dolphinEventEmitter.emit("progress", frame)
+            }
+        })
+        this.dolphinProcess.on("exit", (code) => this.dolphinEventEmitter.emit("done", code))
+    }
+}
 
 export function createSlptoVideoProcess(opts: Partial<SlpToVideoArguments> = {}) {
-    const { workDir, inputFile, dolphinPath, meleeIso, timeout, enableWidescreen } = fillUndefinedFields(opts, DEFAULT_ARGUMENTS)
-
-    const userDir = join(workDir, "User")
-    const userConfigDir = join(userDir, "Config")
+    const args = fillUndefinedFields(opts, DEFAULT_ARGUMENTS)
     
-    const assetDir = join(__dirname, "..", "assets")
-    const dolphinIniFilename = "Dolphin.ini"
-    const gfxIniFilename = "GFX.ini"
-
-    mkdirSync(userConfigDir, {recursive: true})
-    copyFileSync(join(assetDir, dolphinIniFilename), join(userConfigDir, dolphinIniFilename))
-    copyFileSync(join(assetDir, gfxIniFilename), join(userConfigDir, gfxIniFilename))
-
-    if (enableWidescreen) {
-        const userGameSettingsDir = join(userDir, "GameSettings")
-        const geckoFilename = "GALE01.ini"
-
-        mkdirSync(userGameSettingsDir, {recursive: true}) // "recursive: true" makes it so it doesn't throw an error if dir already exists
-        copyFileSync(join(assetDir, geckoFilename), join(userGameSettingsDir, geckoFilename))
-    }
-
-    const inputJsonData : JSONInputFile = {
-        mode: "queue",
-        queue: [
-            {
-                path: inputFile
-            }
-        ]
-    }
-
-    const inputJsonFile = join(workDir, "input.json")
-    writeFileSync(inputJsonFile, JSON.stringify(inputJsonData))
-
-    const playbackProcess = spawn(dolphinPath, [
-        "-u", userDir,
-        "--output-directory", workDir,
-        "-i", inputJsonFile,
-        "-e", meleeIso,
-        "-b",
-        "--cout",
-        "--hide-seekbar"
-    ], {timeout: timeout})
-    playbackProcess.stdout.on("data", (msg: Buffer) => {
-        if (msg.toString().startsWith("[NO_GAME]")) {
-            playbackProcess.kill("SIGINT")
-        }
-    })
-    
-    return new SlpToVideoProcess(playbackProcess)
+    return new SlpToVideoProcess(args)
 }
