@@ -12,8 +12,9 @@ interface Arguments {
     h?: boolean,
     slp_file: string,
     i: string,
-    m?: number
-    o?: string
+    m?: number,
+    o?: string,
+    v?: boolean,
     _: (string|number)[]
 }
 
@@ -23,7 +24,8 @@ async function parseArgv(argv : string[]) : Promise<Arguments> {
         slp_file: {type: "string", demandOption: true, hidden: true}, // same as first positional arg, needed for proper typescript type inference, hidden
         i: {type: "string", alias: "iso", describe: "Path to the Melee ISO", default: DEFAULT_ARGUMENTS.meleeIso},
         m: {type: "number", alias: "timeout", describe: "Maximum amount of miliseconds the Dolphin process is allowed to run", default: DEFAULT_ARGUMENTS.timeout},
-        o: {type: "string", alias: "output", describe: "Name of the output file", default: DEFAULT_ARGUMENTS.outputFilename}
+        o: {type: "string", alias: "output", describe: "Name of the output file", default: DEFAULT_ARGUMENTS.outputFilename},
+        v: {type: "string", alias: "verbose", describe: "Enable extra outpug"}       
     })
     .strict()
     .parse(argv)
@@ -52,7 +54,7 @@ export async function run(argv : string[] = [], development = false) : Promise<v
 
         const { dolphinProcess } = createSlptoVideoProcess({dolphinPath: dolphinPath, inputFile: inputFile, workDir: workDir, meleeIso: meleeIso, timeout: args.m, outputFilename: args.o})
         
-        if (development) {
+        if (args.v) {
             dolphinProcess.stdout.pipe(process.stdout)
             dolphinProcess.stderr.pipe(process.stderr)
         }
