@@ -3,6 +3,7 @@ import { join } from "path"
 import { ChildProcessWithoutNullStreams, spawn } from "child_process"
 import { copyFileSync, mkdirSync, writeFileSync } from "fs"
 import { EventEmitter } from "stream"
+import { SlippiGame } from "@slippi/slippi-js"
 
 type JSONInputFileCommon = {
     replay?: string,
@@ -90,6 +91,8 @@ class SlpToVideoProcess {
 
     static audioDumpFilename = "dspdump.wav"
     static videoDumpFilename = "framedump0.avi"
+    
+    static defaultSlpStartFrame = -123
 
     // used to get the EFBScale option for the INI file, might break in the future
     static internalResToEfbScale : Record<ValidInternalResolution, number> = {
@@ -110,11 +113,15 @@ class SlpToVideoProcess {
         "8x": 11
     }
 
+    slippiGame : SlippiGame
+
     dolphinProcess: ChildProcessWithoutNullStreams
     dolphinEventEmitter: ProcessEventEmmiter
 
-    constructor(args: SlpToVideoArguments) {
-        const { workDir, inputFile, dolphinPath, meleeIso, timeout, enableWidescreen } = fillUndefinedFields(args, DEFAULT_ARGUMENTS)
+    constructor({ workDir, inputFile, dolphinPath, meleeIso, timeout, enableWidescreen }: SlpToVideoArguments) {
+
+        this.slippiGame = new SlippiGame(inputFile);console.log(this.slippiGame.getMetadata())
+        this.dolphinEventEmitter = new ProcessEventEmmiter()
 
         const userDir = join(workDir, "User")
         const userConfigDir = join(userDir, "Config")
@@ -146,7 +153,6 @@ class SlpToVideoProcess {
         const inputJsonFile = join(workDir, "input.json")
         writeFileSync(inputJsonFile, JSON.stringify(inputJsonData))
 
-        this.dolphinEventEmitter = new ProcessEventEmmiter()
         this.dolphinProcess = spawn(dolphinPath, [
             "-u", userDir,
             "--output-directory", workDir,
@@ -163,13 +169,22 @@ class SlpToVideoProcess {
                 return
             }
 
-            const match = msgStr.match(/\[CURRENT_FRAME\]\s+(\d+)/)
+            const match = msgStr.match(/\[CURRENT_FRAME\]\s+(-?\d+)/)
             if (match) {
                 const frame =  parseInt(match[1])
                 this.dolphinEventEmitter.emit("progress", frame)
             }
         })
         this.dolphinProcess.on("exit", (code) => this.dolphinEventEmitter.emit("done", code))
+    }
+
+    getLastFrame() {
+        const frame = this.slippiGame.getMetadata()?.lastFrame
+        if (frame !== undefined && frame !== null) {
+            return frame
+        }
+
+        return SlpToVideoProcess.defaultSlpStartFrame
     }
 }
 
