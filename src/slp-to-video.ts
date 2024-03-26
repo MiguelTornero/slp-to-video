@@ -1,7 +1,7 @@
 import { fillUndefinedFields } from "./common"
 import { join } from "path"
 import { ChildProcessWithoutNullStreams, spawn } from "child_process"
-import { mkdirSync, writeFileSync } from "fs"
+import { copyFileSync, mkdirSync, writeFileSync } from "fs"
 
 type JSONInputFileCommon = {
     replay?: string,
@@ -93,8 +93,9 @@ const MAP_INTERNAL_RES_TO_EFB_SCALE : Record<ValidInternalResolution, number> = 
     "8x": 11
 }
 
+const AUDIO_DUMP_FILENAME = "dspdump.wav"
+const VIDEO_DUMP_FILENAME = ""
 
-// TODO: refactor into a factory for a Process object
 export function createSlptoVideoProcess(opts: Partial<SlpToVideoArguments> = {}) {
     const { workDir, inputFile, dolphinPath, meleeIso, timeout } = fillUndefinedFields(opts, DEFAULT_ARGUMENTS)
 
@@ -102,8 +103,15 @@ export function createSlptoVideoProcess(opts: Partial<SlpToVideoArguments> = {})
     const userConfigDir = join(userDir, "Config")
     const userGameSettingsDir = join(userDir, "GameSettings")
     
+    const assetDir = join(__dirname, "..", "assets")
+    const dolphinIniFilename = "Dolphin.ini"
+    const gfxIniFilename = "GFX.ini"
+
     mkdirSync(userConfigDir, {recursive: true}) 
     mkdirSync(userGameSettingsDir, {recursive: true}) // "recursive: true" makes it so it doesn't throw an error if dir already exists
+
+    copyFileSync(join(assetDir, dolphinIniFilename), join(userConfigDir, dolphinIniFilename))
+    copyFileSync(join(assetDir, gfxIniFilename), join(userConfigDir, gfxIniFilename))
 
     const inputJsonData : JSONInputFile = {
         mode: "queue",
@@ -119,6 +127,7 @@ export function createSlptoVideoProcess(opts: Partial<SlpToVideoArguments> = {})
 
     const playbackProcess = spawn(dolphinPath, [
         "-u", userDir,
+        "--output-directory", workDir,
         "-i", inputJsonFile,
         "-e", meleeIso,
         "-b",

@@ -70,7 +70,7 @@ export async function run(argv : string[] = [], development = false) : Promise<v
     }
     finally {
         console.log("cleaning up...")
-        if (workDir !== null) {
+        if (workDir !== null && !development) {
             await rm(workDir, {recursive: true, force: true})
        }
     }
