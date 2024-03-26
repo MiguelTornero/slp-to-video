@@ -10,5 +10,3 @@ node_modules
 tsconfig.tsbuildinfo
 .cache
 /cache
-#for now
-/assets

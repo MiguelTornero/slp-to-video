@@ -25,7 +25,7 @@ async function parseArgv(argv : string[]) : Promise<Arguments> {
         i: {type: "string", alias: "iso", describe: "Path to the Melee ISO", default: DEFAULT_ARGUMENTS.meleeIso},
         m: {type: "number", alias: "timeout", describe: "Maximum amount of miliseconds the Dolphin process is allowed to run", default: DEFAULT_ARGUMENTS.timeout},
         o: {type: "string", alias: "output", describe: "Name of the output file", default: DEFAULT_ARGUMENTS.outputFilename},
-        v: {type: "string", alias: "verbose", describe: "Enable extra outpug"}       
+        v: {type: "boolean", alias: "verbose", describe: "Enable extra outpug"}       
     })
     .strict()
     .parse(argv)
