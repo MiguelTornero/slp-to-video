@@ -54,21 +54,31 @@ export async function run(argv : string[] = [], development = false) : Promise<v
         console.log("dolphin:", dolphinPath)
         console.log("iso:", meleeIso)
 
-        const { dolphinProcess, dolphinEventEmitter } = createSlptoVideoProcess({dolphinPath: dolphinPath, inputFile: inputFile, workDir: workDir, meleeIso: meleeIso, timeout: args.m, outputFilename: args.o, enableWidescreen: args.w})
+        const slpProcess = createSlptoVideoProcess({dolphinPath: dolphinPath, inputFile: inputFile, workDir: workDir, meleeIso: meleeIso, timeout: args.m, outputFilename: args.o, enableWidescreen: args.w})
         
         if (args.v) {
-            dolphinProcess.stdout.pipe(process.stdout)
-            dolphinProcess.stderr.pipe(process.stderr)
+            slpProcess.dolphinProcess.stdout.pipe(process.stdout)
+            slpProcess.dolphinProcess.stderr.pipe(process.stderr)
+        }
+        else {
+            const normalizedLast = slpProcess.getLastFrame() - slpProcess.getFirstFrame()
+            slpProcess.dolphinEventEmitter.on("progress", (frame) => {
+                const normalizedCurrent = frame - slpProcess.getFirstFrame()
+                const percent = normalizedCurrent / normalizedLast * 100
+
+                process.stdout.write(`processing frames: ${percent.toFixed(1)}% (${normalizedCurrent}/${normalizedLast})\r`)
+            })
         }
 
-        dolphinEventEmitter.on("progress", console.log)
-
         const exitCode = await new Promise<number|null>((res) => {
-            dolphinEventEmitter.on("done", res)
+            slpProcess.dolphinEventEmitter.on("done", res)
         })
 
         if (exitCode !== 0) {
             console.error("Dolphin exited abnormally. This may be due to an invalid SLP or ISO file")
+        }
+        else {
+            console.log("\ndolphin process finished")
         }
     }
     finally {

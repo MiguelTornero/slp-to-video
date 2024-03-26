@@ -120,7 +120,7 @@ class SlpToVideoProcess {
 
     constructor({ workDir, inputFile, dolphinPath, meleeIso, timeout, enableWidescreen }: SlpToVideoArguments) {
 
-        this.slippiGame = new SlippiGame(inputFile);console.log(this.slippiGame.getMetadata())
+        this.slippiGame = new SlippiGame(inputFile)
         this.dolphinEventEmitter = new ProcessEventEmmiter()
 
         const userDir = join(workDir, "User")
@@ -184,6 +184,10 @@ class SlpToVideoProcess {
             return frame
         }
 
+        return SlpToVideoProcess.defaultSlpStartFrame
+    }
+
+    getFirstFrame() {
         return SlpToVideoProcess.defaultSlpStartFrame
     }
 }
