@@ -15,6 +15,7 @@ interface Arguments {
     m?: number,
     o?: string,
     v?: boolean,
+    w?: boolean,
     _: (string|number)[]
 }
 
@@ -25,7 +26,8 @@ async function parseArgv(argv : string[]) : Promise<Arguments> {
         i: {type: "string", alias: "iso", describe: "Path to the Melee ISO", default: DEFAULT_ARGUMENTS.meleeIso},
         m: {type: "number", alias: "timeout", describe: "Maximum amount of miliseconds the Dolphin process is allowed to run", default: DEFAULT_ARGUMENTS.timeout},
         o: {type: "string", alias: "output", describe: "Name of the output file", default: DEFAULT_ARGUMENTS.outputFilename},
-        v: {type: "boolean", alias: "verbose", describe: "Enable extra outpug"}       
+        v: {type: "boolean", alias: "verbose", describe: "Enable extra outpug"},
+        w: {type: "boolean", alias: "widescreen", describe: "Enable widescreen resolution (16:9}"}
     })
     .strict()
     .parse(argv)
@@ -52,7 +54,7 @@ export async function run(argv : string[] = [], development = false) : Promise<v
         console.log("dolphin:", dolphinPath)
         console.log("iso:", meleeIso)
 
-        const { dolphinProcess } = createSlptoVideoProcess({dolphinPath: dolphinPath, inputFile: inputFile, workDir: workDir, meleeIso: meleeIso, timeout: args.m, outputFilename: args.o})
+        const { dolphinProcess } = createSlptoVideoProcess({dolphinPath: dolphinPath, inputFile: inputFile, workDir: workDir, meleeIso: meleeIso, timeout: args.m, outputFilename: args.o, enableWidescreen: args.w})
         
         if (args.v) {
             dolphinProcess.stdout.pipe(process.stdout)

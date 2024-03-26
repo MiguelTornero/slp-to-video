@@ -56,7 +56,7 @@ const TEN_MINUTES_TO_MS = 10 * 60 * 1000
 
 export const DEFAULT_ARGUMENTS : Readonly<SlpToVideoArguments> = {
     inputFile: "input.slp",
-    workDir: ".",
+    workDir: "tmp",
     meleeIso: "SSBM.iso",
     dolphinPath: "playback-slippi",
     internalResolution: "720p",
@@ -94,24 +94,29 @@ const MAP_INTERNAL_RES_TO_EFB_SCALE : Record<ValidInternalResolution, number> = 
 }
 
 const AUDIO_DUMP_FILENAME = "dspdump.wav"
-const VIDEO_DUMP_FILENAME = ""
+const VIDEO_DUMP_FILENAME = "framedump0.avi"
 
 export function createSlptoVideoProcess(opts: Partial<SlpToVideoArguments> = {}) {
-    const { workDir, inputFile, dolphinPath, meleeIso, timeout } = fillUndefinedFields(opts, DEFAULT_ARGUMENTS)
+    const { workDir, inputFile, dolphinPath, meleeIso, timeout, enableWidescreen } = fillUndefinedFields(opts, DEFAULT_ARGUMENTS)
 
     const userDir = join(workDir, "User")
     const userConfigDir = join(userDir, "Config")
-    const userGameSettingsDir = join(userDir, "GameSettings")
     
     const assetDir = join(__dirname, "..", "assets")
     const dolphinIniFilename = "Dolphin.ini"
     const gfxIniFilename = "GFX.ini"
 
-    mkdirSync(userConfigDir, {recursive: true}) 
-    mkdirSync(userGameSettingsDir, {recursive: true}) // "recursive: true" makes it so it doesn't throw an error if dir already exists
-
+    mkdirSync(userConfigDir, {recursive: true})
     copyFileSync(join(assetDir, dolphinIniFilename), join(userConfigDir, dolphinIniFilename))
     copyFileSync(join(assetDir, gfxIniFilename), join(userConfigDir, gfxIniFilename))
+
+    if (enableWidescreen) {
+        const userGameSettingsDir = join(userDir, "GameSettings")
+        const geckoFilename = "GALE01.ini"
+
+        mkdirSync(userGameSettingsDir, {recursive: true}) // "recursive: true" makes it so it doesn't throw an error if dir already exists
+        copyFileSync(join(assetDir, geckoFilename), join(userGameSettingsDir, geckoFilename))
+    }
 
     const inputJsonData : JSONInputFile = {
         mode: "queue",
