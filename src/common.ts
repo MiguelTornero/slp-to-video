@@ -1,6 +1,22 @@
 import { mkdtempSync, existsSync, mkdirSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { isAbsolute, join } from "node:path"
+import { EventEmitter } from "node:events"
+
+export interface ExternalProcess {
+    onExit(callback: (code: number|null) => void): void
+    onProgress(callback: (progress: number) => void): void
+}
+
+export interface ProcessEventEmmiter extends EventEmitter {
+    on(event: "progress", listener: (progress: number) => void): this
+    once(event: "progress", listener: (progress: number) => void): this
+    emit(event: "progress", progress: number): boolean
+
+    on(event: "done", listener: (code: number|null) => void): this
+    once(event: "done", listener: (code: number|null) => void): this
+    emit(event: "done", code: number|null): boolean
+}
 
 export function getWorkDir(development = false, prefix = "slp-to-video-") {
     let _tempDir = ""
@@ -35,3 +51,5 @@ export function toAbsolutePath(path: string, base: string) {
     }
     return join(base, path)
 }
+
+export const assetDir = join(__dirname, "..", "assets")
