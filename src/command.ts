@@ -66,7 +66,7 @@ export async function run(argv : string[] = [], development = false) : Promise<v
                 const normalizedCurrent = frame - slpProcess.getFirstFrame()
                 const percent = normalizedCurrent / normalizedLast * 100
 
-                process.stdout.write(`processing frames: ${percent.toFixed(1)}% (${normalizedCurrent}/${normalizedLast})\r`)
+                process.stdout.write(`rendering frames: ${percent.toFixed(1)}% (${normalizedCurrent}/${normalizedLast})\r`)
             })
         }
 
@@ -75,7 +75,7 @@ export async function run(argv : string[] = [], development = false) : Promise<v
         })
 
         if (exitCode !== 0) {
-            console.error("Dolphin exited abnormally. This may be due to an invalid SLP or ISO file")
+            console.error("\ndolphin exited abnormally. This may be due to an invalid SLP or ISO file")
         }
         else {
             console.log("\ndolphin process finished")

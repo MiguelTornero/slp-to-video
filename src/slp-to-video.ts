@@ -1,9 +1,10 @@
 import { fillUndefinedFields } from "./common"
 import { join } from "path"
 import { ChildProcessWithoutNullStreams, spawn } from "child_process"
-import { copyFileSync, mkdirSync, writeFileSync } from "fs"
+import { accessSync, copyFileSync, mkdirSync, writeFileSync } from "fs"
 import { EventEmitter } from "stream"
 import { SlippiGame } from "@slippi/slippi-js"
+import { mergeVideoAndAudio } from "./ffmpeg"
 
 type JSONInputFileCommon = {
     replay?: string,
@@ -91,6 +92,7 @@ class SlpToVideoProcess {
 
     static audioDumpFilename = "dspdump.wav"
     static videoDumpFilename = "framedump0.avi"
+    static outputAviFilename = "output.avi"
     
     static defaultSlpStartFrame = -123
 
@@ -175,7 +177,20 @@ class SlpToVideoProcess {
                 this.dolphinEventEmitter.emit("progress", frame)
             }
         })
-        this.dolphinProcess.on("exit", (code) => this.dolphinEventEmitter.emit("done", code))
+        this.dolphinProcess.on("exit", (code) => {
+            this.dolphinEventEmitter.emit("done", code)
+            
+            if (code !== 0) {return}
+
+            const dumpAvi = join(workDir, SlpToVideoProcess.videoDumpFilename)
+            const dumpWav = join(workDir, SlpToVideoProcess.audioDumpFilename)
+            const outputAvi = join(workDir, SlpToVideoProcess.outputAviFilename)
+
+            accessSync(dumpAvi)
+            accessSync(dumpWav)
+
+            mergeVideoAndAudio(dumpAvi, dumpWav, outputAvi)
+        })
     }
 
     getLastFrame() {
