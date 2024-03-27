@@ -6,6 +6,8 @@ import { hideBin } from 'yargs/helpers'
 import { DEFAULT_ARGUMENTS, createSlptoVideoProcess } from "./slp-to-video";
 import { join } from "path";
 import { cwd } from "process";
+import { SlippiGame } from "@slippi/slippi-js";
+import { DolphinProcessFactory } from "./dolphin";
 
 interface Arguments {
     [x: string]: unknown,
@@ -50,29 +52,40 @@ export async function run(argv : string[] = [], development = false) : Promise<v
         const meleeIso = toAbsolutePath(args.i, cwd())
         const outputPath = toAbsolutePath(args.o, cwd())
         
-        console.log("workdir:", workDir)
-        console.log("slp file:", inputFile)
-        console.log("dolphin:", dolphinPath)
-        console.log("iso:", meleeIso)
-
-        const slpProcess = createSlptoVideoProcess({dolphinPath: dolphinPath, inputFile: inputFile, workDir: workDir, meleeIso: meleeIso, timeout: args.m, outputFilename: outputPath, enableWidescreen: args.w})
-        
+        let stdout = undefined, stderr = undefined
         if (args.v) {
-            slpProcess.dolphinProcess.stdout.pipe(process.stdout)
-            slpProcess.dolphinProcess.stderr.pipe(process.stderr)
+            console.log("workdir:", workDir)
+            console.log("slp file:", inputFile)
+            console.log("dolphin:", dolphinPath)
+            console.log("iso:", meleeIso)
+            stdout = process.stdout
+            stderr = process.stderr
         }
-        else {
-            const normalizedLast = slpProcess.getLastFrame() - slpProcess.getFirstFrame()
-            slpProcess.dolphinEventEmitter.on("progress", (frame) => {
-                const normalizedCurrent = frame - slpProcess.getFirstFrame()
+
+        console.log("launching playback dolphin...")
+        const {onDolphinProgress, onDolphinExit} = createSlptoVideoProcess({dolphinPath: dolphinPath, inputFile: inputFile, workDir: workDir, meleeIso: meleeIso, timeout: args.m, outputFilename: outputPath, enableWidescreen: args.w, stdout, stderr})
+        
+        if (!args.v) {
+            const slippiGame = new SlippiGame(inputFile)
+
+            let lastFrame = slippiGame.getMetadata()?.lastFrame
+            if (lastFrame === undefined || lastFrame === null) {
+                lastFrame = DolphinProcessFactory.defaultSlpStartFrame
+            }
+
+            const firstFrame = DolphinProcessFactory.defaultSlpStartFrame
+
+            const normalizedLast = lastFrame - firstFrame
+            onDolphinProgress((frame) => {
+                const normalizedCurrent = frame - firstFrame
                 const percent = normalizedCurrent / normalizedLast * 100
 
-                process.stdout.write(`rendering frames: ${percent.toFixed(1)}% (${normalizedCurrent}/${normalizedLast})\r`)
+                process.stdout.write(`\rrendering frames: ${percent.toFixed(1)}% (${normalizedCurrent}/${normalizedLast})`)
             })
         }
 
         const exitCode = await new Promise<number|null>((res) => {
-            slpProcess.dolphinEventEmitter.on("done", res)
+            onDolphinExit(res)
         })
 
         if (exitCode !== 0) {

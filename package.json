@@ -33,7 +33,7 @@
   "files": [
     "/bin",
     "/dist",
-    "/oclif.manifest.json"
+    "/assets"
   ],
   "devDependencies": {
     "@swc/cli": "^0.3.10",

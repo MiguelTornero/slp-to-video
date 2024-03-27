@@ -3,9 +3,10 @@ import { ExternalProcess, ProcessEventEmmiter, assetDir } from "./common";
 import { join } from "node:path";
 import { copyFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { spawn } from "node:child_process";
+import { Stream, Writable } from "node:stream";
 
 type ValidInternalResultionMultiplier = 1 | 1.5 | 2 | 2.5 | 3 | 4 | 5 | 6 | 7 | 8
-type ValidInternalResolution = `${ValidInternalResultionMultiplier}x` | "720p" | "1080p"  | "WQHD" | "4K" | "auto"
+export type ValidInternalResolution = `${ValidInternalResultionMultiplier}x` | "720p" | "1080p"  | "WQHD" | "4K" | "auto"
 
 type JSONInputFileCommon = {
     replay?: string,
@@ -41,8 +42,13 @@ type JSONQueueItem = {
     gameStation?: string
 }
 
-
-export class DolphinProcess implements ExternalProcess {
+/**
+ * Utility class for creating dolphin processes
+ * @example
+ * const factory = new DolphinProcessFactory(args)
+ * const process = factory.spawnProcess() // returns ChildProcessWithoutNullStreams
+ */
+export class DolphinProcessFactory {
     static dolphinIniFilename = "Dolphin.ini"
     static gfxIniFilename = "GFX.ini"
     static geckoFilename = "GALE01.ini"
@@ -72,8 +78,6 @@ export class DolphinProcess implements ExternalProcess {
         "8x": 11
     }
 
-    private eventEmitter : ProcessEventEmmiter
-
     dolphinPath: string
     enableWidescreen : boolean
     workDir: string
@@ -82,15 +86,18 @@ export class DolphinProcess implements ExternalProcess {
     meleeIso: string
     timeout: number
     inputJsonPath: string
+    stdout?: Writable
+    stderr?: Writable
 
-    constructor({dolphinPath, slpInputFile, workDir, meleeIso, timeout, enableWidescreen}: {dolphinPath: string, slpInputFile: string, workDir: string, meleeIso: string, timeout: number, enableWidescreen: boolean}) {
-        this.eventEmitter = new EventEmitter()
+    constructor({dolphinPath, slpInputFile, workDir, meleeIso, timeout, enableWidescreen, stdout, stderr}: {dolphinPath: string, slpInputFile: string, workDir: string, meleeIso: string, timeout: number, enableWidescreen: boolean, stdout?: Writable, stderr?: Writable}) {
         this.dolphinPath = dolphinPath
         this.enableWidescreen = enableWidescreen
         this.workDir = workDir
         this.slpInputFile = slpInputFile
         this.meleeIso = meleeIso
         this.timeout = timeout
+        this.stdout = stdout
+        this.stderr = stderr
 
         this.userDir = join(workDir, "User")
         this.inputJsonPath = join(workDir, "input.json")
@@ -102,14 +109,14 @@ export class DolphinProcess implements ExternalProcess {
         mkdirSync(this.workDir, {recursive: true}) // "recursive: true" makes it so it doesn't throw an error if the dir exists
 
         mkdirSync(userConfigDir, {recursive: true})
-        copyFileSync(join(assetDir, DolphinProcess.dolphinIniFilename), join(userConfigDir, DolphinProcess.dolphinIniFilename))
-        copyFileSync(join(assetDir, DolphinProcess.gfxIniFilename), join(userConfigDir, DolphinProcess.gfxIniFilename))
+        copyFileSync(join(assetDir, DolphinProcessFactory.dolphinIniFilename), join(userConfigDir, DolphinProcessFactory.dolphinIniFilename))
+        copyFileSync(join(assetDir, DolphinProcessFactory.gfxIniFilename), join(userConfigDir, DolphinProcessFactory.gfxIniFilename))
 
         if (this.enableWidescreen) {
             const userGameSettingsDir = join(this.userDir, "GameSettings")
     
             mkdirSync(userGameSettingsDir, {recursive: true})
-            copyFileSync(join(assetDir, DolphinProcess.geckoFilename), join(userGameSettingsDir, DolphinProcess.geckoFilename))
+            copyFileSync(join(assetDir, DolphinProcessFactory.geckoFilename), join(userGameSettingsDir, DolphinProcessFactory.geckoFilename))
         }
 
         const inputJsonData : JSONInputFile = {
@@ -124,8 +131,11 @@ export class DolphinProcess implements ExternalProcess {
         writeFileSync(this.inputJsonPath, JSON.stringify(inputJsonData))
     }
 
-    spawnProcess() {
+    spawnProcess(): ExternalProcess {
         this.prepareWorkDir()
+
+        const eventEmitter: ProcessEventEmmiter = new EventEmitter()
+
         const dolphinProcess = spawn(this.dolphinPath, [
             "-u", this.userDir,
             "--output-directory", this.workDir,
@@ -135,6 +145,13 @@ export class DolphinProcess implements ExternalProcess {
             "--cout",
             "--hide-seekbar"
         ], {timeout: this.timeout})
+        
+        if (this.stdout) {
+            dolphinProcess.stdout.pipe(this.stdout)
+        }
+        if (this.stderr) {
+            dolphinProcess.stderr.pipe(this.stderr)
+        }
 
         dolphinProcess.stdout.on("data", (msg) => {
             if (!(msg instanceof Buffer)) { return }
@@ -150,22 +167,21 @@ export class DolphinProcess implements ExternalProcess {
             const match = msgStr.match(/\[CURRENT_FRAME\]\s+(-?\d+)/)
             if (match) {
                 const frame = parseInt(match[1])
-                this.eventEmitter.emit("progress", frame)
+                eventEmitter.emit("progress", frame)
             }
         })
 
         dolphinProcess.on("exit", (code) => {
-            this.eventEmitter.emit("done", code)
+            eventEmitter.emit("done", code)
         })
 
-        return dolphinProcess
-    }
-
-    onExit(callback: (code: number | null) => void): void {
-        this.eventEmitter.on("done", callback)
-    }
-
-    onProgress(callback: (progress: number) => void): void {
-        this.eventEmitter.on("progress", callback)
+        return {
+            onExit(callback) {
+                eventEmitter.on("done", callback)
+            },
+            onProgress(callback) {
+                eventEmitter.on("progress", callback)
+            }
+        }
     }
 }

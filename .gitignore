@@ -11,4 +11,4 @@ tsconfig.tsbuildinfo
 .cache
 /cache
 #output files
-.avi
+*.avi
