@@ -120,7 +120,7 @@ class SlpToVideoProcess {
     dolphinProcess: ChildProcessWithoutNullStreams
     dolphinEventEmitter: ProcessEventEmmiter
 
-    constructor({ workDir, inputFile, dolphinPath, meleeIso, timeout, enableWidescreen }: SlpToVideoArguments) {
+    constructor({ workDir, inputFile, dolphinPath, meleeIso, timeout, enableWidescreen, outputFilename }: SlpToVideoArguments) {
 
         this.slippiGame = new SlippiGame(inputFile)
         this.dolphinEventEmitter = new ProcessEventEmmiter()
@@ -190,6 +190,13 @@ class SlpToVideoProcess {
             accessSync(dumpWav)
 
             mergeVideoAndAudio(dumpAvi, dumpWav, outputAvi)
+
+            let outputFile = outputFilename
+            if (!outputFile.toLowerCase().endsWith(".avi")) {
+                outputFile += ".avi"
+            }
+
+            copyFileSync(outputAvi, outputFile)
         })
     }
 

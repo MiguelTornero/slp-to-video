@@ -13,7 +13,7 @@ interface Arguments {
     slp_file: string,
     i: string,
     m?: number,
-    o?: string,
+    o: string,
     v?: boolean,
     w?: boolean,
     _: (string|number)[]
@@ -48,13 +48,14 @@ export async function run(argv : string[] = [], development = false) : Promise<v
 
         const inputFile = toAbsolutePath(slp_file, cwd())
         const meleeIso = toAbsolutePath(args.i, cwd())
+        const outputPath = toAbsolutePath(args.o, cwd())
         
         console.log("workdir:", workDir)
         console.log("slp file:", inputFile)
         console.log("dolphin:", dolphinPath)
         console.log("iso:", meleeIso)
 
-        const slpProcess = createSlptoVideoProcess({dolphinPath: dolphinPath, inputFile: inputFile, workDir: workDir, meleeIso: meleeIso, timeout: args.m, outputFilename: args.o, enableWidescreen: args.w})
+        const slpProcess = createSlptoVideoProcess({dolphinPath: dolphinPath, inputFile: inputFile, workDir: workDir, meleeIso: meleeIso, timeout: args.m, outputFilename: outputPath, enableWidescreen: args.w})
         
         if (args.v) {
             slpProcess.dolphinProcess.stdout.pipe(process.stdout)
