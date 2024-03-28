@@ -3,7 +3,8 @@ import { ExternalProcess, ProcessEventEmmiter, assetDir } from "./common";
 import { join } from "node:path";
 import { copyFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { spawn } from "node:child_process";
-import { Stream, Writable } from "node:stream";
+import { Writable } from "node:stream";
+import { SlippiGame } from "@slippi/slippi-js";
 
 type ValidInternalResultionMultiplier = 1 | 1.5 | 2 | 2.5 | 3 | 4 | 5 | 6 | 7 | 8
 export type ValidInternalResolution = `${ValidInternalResultionMultiplier}x` | "720p" | "1080p"  | "WQHD" | "4K" | "auto"
@@ -44,9 +45,6 @@ type JSONQueueItem = {
 
 /**
  * Utility class for creating dolphin processes
- * @example
- * const factory = new DolphinProcessFactory(args)
- * const process = factory.spawnProcess() // returns ChildProcessWithoutNullStreams
  */
 export class DolphinProcessFactory {
     static dolphinIniFilename = "Dolphin.ini"
@@ -89,6 +87,12 @@ export class DolphinProcessFactory {
     stdout?: Writable
     stderr?: Writable
 
+    dumpAudioFile: string
+    dumpVideoFile: string
+
+    endFrame: number
+    startFrame: number
+
     constructor({dolphinPath, slpInputFile, workDir, meleeIso, timeout, enableWidescreen, stdout, stderr}: {dolphinPath: string, slpInputFile: string, workDir: string, meleeIso: string, timeout: number, enableWidescreen: boolean, stdout?: Writable, stderr?: Writable}) {
         this.dolphinPath = dolphinPath
         this.enableWidescreen = enableWidescreen
@@ -101,6 +105,20 @@ export class DolphinProcessFactory {
 
         this.userDir = join(workDir, "User")
         this.inputJsonPath = join(workDir, "input.json")
+        this.dumpAudioFile = join(workDir, DolphinProcessFactory.audioDumpFilename)
+        this.dumpVideoFile = join(workDir, DolphinProcessFactory.videoDumpFilename)
+
+        const slippiGame = new SlippiGame(slpInputFile)
+        const endFrame = slippiGame.getMetadata()?.lastFrame
+
+        if (endFrame === undefined || endFrame === null) {
+            this.endFrame = DolphinProcessFactory.defaultSlpStartFrame
+        }
+        else {
+            this.endFrame = endFrame
+        }
+        this.startFrame = DolphinProcessFactory.defaultSlpStartFrame
+
     }
 
     prepareWorkDir() {

@@ -14,7 +14,7 @@ interface Arguments {
     h?: boolean,
     slp_file: string,
     i: string,
-    m?: number,
+    m: number,
     o: string,
     v?: boolean,
     w?: boolean,
@@ -63,37 +63,39 @@ export async function run(argv : string[] = [], development = false) : Promise<v
         }
 
         console.log("launching playback dolphin...")
-        const {onDolphinProgress, onDolphinExit} = createSlptoVideoProcess({dolphinPath: dolphinPath, inputFile: inputFile, workDir: workDir, meleeIso: meleeIso, timeout: args.m, outputFilename: outputPath, enableWidescreen: args.w, stdout, stderr})
+        const {onDolphinProgress, onDolphinExit, startFrame, endFrame, onDone} = createSlptoVideoProcess({dolphinPath: dolphinPath, inputFile: inputFile, workDir: workDir, meleeIso: meleeIso, timeout: args.m, outputFilename: outputPath, enableWidescreen: args.w, stdout, stderr})
         
         if (!args.v) {
-            const slippiGame = new SlippiGame(inputFile)
-
-            let lastFrame = slippiGame.getMetadata()?.lastFrame
-            if (lastFrame === undefined || lastFrame === null) {
-                lastFrame = DolphinProcessFactory.defaultSlpStartFrame
-            }
-
-            const firstFrame = DolphinProcessFactory.defaultSlpStartFrame
-
-            const normalizedLast = lastFrame - firstFrame
+            const normalizedLast = endFrame - startFrame
+            
             onDolphinProgress((frame) => {
-                const normalizedCurrent = frame - firstFrame
+                const normalizedCurrent = frame - startFrame
                 const percent = normalizedCurrent / normalizedLast * 100
 
                 process.stdout.write(`\rrendering frames: ${percent.toFixed(1)}% (${normalizedCurrent}/${normalizedLast})`)
             })
         }
 
-        const exitCode = await new Promise<number|null>((res) => {
-            onDolphinExit(res)
+        onDolphinExit((exitCode) => {
+            process.stdout.write("\n")
+            if (exitCode !== 0) {
+                console.error("dolphin exited abnormally. This may be due to an invalid SLP or ISO file")
+                return
+            }
+            
+            console.log("dolphin process finished")
         })
 
-        if (exitCode !== 0) {
-            console.error("\ndolphin exited abnormally. This may be due to an invalid SLP or ISO file")
-        }
-        else {
-            console.log("\ndolphin process finished")
-        }
+        await new Promise<void>((res) => {
+            const timer = setTimeout(() => {
+                console.error("reached timeout timer")
+                res()
+            }, args.m)
+            onDone(() => {
+                clearTimeout(timer)
+                res()
+            })
+        })
     }
     finally {
         console.log("cleaning up...")

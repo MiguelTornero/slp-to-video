@@ -1,10 +1,8 @@
-import { ExternalProcess, fillUndefinedFields } from "./common"
-import { join } from "path"
-import { ChildProcessWithoutNullStreams, spawn } from "child_process"
-import { accessSync, copyFileSync, mkdirSync, writeFileSync } from "fs"
+import { fillUndefinedFields } from "./common"
 import { EventEmitter, Writable } from "stream"
-import { mergeVideoAndAudio } from "./ffmpeg"
 import { DolphinProcessFactory, ValidInternalResolution } from "./dolphin"
+import { mergeAviVideoAndAudio } from "./ffmpeg"
+import { join } from "path"
 
 type SlpToVideoArguments = {
     inputFile: string,
@@ -46,8 +44,16 @@ export function createSlptoVideoProcess(opts: Partial<SlpToVideoArguments> = {})
 
     dolphinProcess.onExit((code) => {
         if (code !== 0) {
-            eventEmitter.emit("done")
+            eventEmitter.emit("done", null)
             return
+        }
+
+        try { 
+            mergeAviVideoAndAudio(dolphinFactory.dumpVideoFile, dolphinFactory.dumpAudioFile, outputFilename)
+            eventEmitter.emit("done", outputFilename)
+        }
+        catch (e) {
+            eventEmitter.emit("done", null)
         }
     })
 
@@ -58,8 +64,10 @@ export function createSlptoVideoProcess(opts: Partial<SlpToVideoArguments> = {})
         onDolphinExit(callback: (code: number | null) => void) {
             dolphinProcess.onExit(callback)
         },
-        onDone(callback: () => void) {
+        onDone(callback: (outputFile: string|null) => void) {
             eventEmitter.on("done", callback)
-        }
+        },
+        startFrame: dolphinFactory.startFrame,
+        endFrame: dolphinFactory.endFrame
     }
 }
