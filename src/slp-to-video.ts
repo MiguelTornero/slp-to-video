@@ -1,4 +1,4 @@
-import { ProcessEventEmmiter, fillUndefinedFields } from "./common"
+import { ProcessEventEmmiter, fillUndefinedFields, ProgressCallback } from "./common"
 import { EventEmitter, Writable } from "stream"
 import { DolphinProcessFactory, ValidInternalResolution } from "./dolphin"
 import { mergeAviVideoAndAudio } from "./ffmpeg"
@@ -57,7 +57,7 @@ export function createSlptoVideoProcess(opts: Partial<SlpToVideoArguments> = {})
     })
 
     return {
-        onDolphinProgress(callback: (progress: number) => void) {
+        onDolphinProgress(callback: ProgressCallback) {
             dolphinProcess.onProgress(callback)
         },
         onDolphinExit(callback: (code: number | null) => void) {

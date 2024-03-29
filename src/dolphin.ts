@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { copyFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { spawn } from "node:child_process";
 import { Writable } from "node:stream";
-import { SlippiGame } from "@slippi/slippi-js";
+import { SlippiGame, Frames } from "@slippi/slippi-js";
 
 type ValidInternalResultionMultiplier = 1 | 1.5 | 2 | 2.5 | 3 | 4 | 5 | 6 | 7 | 8
 export type ValidInternalResolution = `${ValidInternalResultionMultiplier}x` | "720p" | "1080p"  | "WQHD" | "4K" | "auto"
@@ -55,8 +55,6 @@ export class DolphinProcessFactory {
     static videoDumpFilename = "framedump0.avi"
     static outputAviFilename = "output.avi"
     
-    static defaultSlpStartFrame = -123
-
     // used to get the EFBScale option for the INI file, might break in the future
     static internalResToEfbScale : Record<ValidInternalResolution, number> = {
         "auto": 0,
@@ -90,7 +88,7 @@ export class DolphinProcessFactory {
     dumpAudioFile: string
     dumpVideoFile: string
 
-    endFrame: number
+    endFrame?: number
     startFrame: number
 
     constructor({dolphinPath, slpInputFile, workDir, meleeIso, timeout, enableWidescreen, stdout, stderr}: {dolphinPath: string, slpInputFile: string, workDir: string, meleeIso: string, timeout: number, enableWidescreen: boolean, stdout?: Writable, stderr?: Writable}) {
@@ -108,16 +106,16 @@ export class DolphinProcessFactory {
         this.dumpAudioFile = join(workDir, DolphinProcessFactory.audioDumpFilename)
         this.dumpVideoFile = join(workDir, DolphinProcessFactory.videoDumpFilename)
 
+        this.startFrame = Frames.FIRST
         const slippiGame = new SlippiGame(slpInputFile)
         const endFrame = slippiGame.getMetadata()?.lastFrame
-
-        if (endFrame === undefined || endFrame === null) {
-            this.endFrame = DolphinProcessFactory.defaultSlpStartFrame
+        
+        if (endFrame === null) {
+            this.endFrame = undefined
         }
         else {
             this.endFrame = endFrame
         }
-        this.startFrame = DolphinProcessFactory.defaultSlpStartFrame
 
     }
 
@@ -185,7 +183,7 @@ export class DolphinProcessFactory {
             const match = msgStr.match(/\[CURRENT_FRAME\]\s+(-?\d+)/)
             if (match) {
                 const frame = parseInt(match[1])
-                eventEmitter.emit("progress", frame)
+                eventEmitter.emit("progress", frame, this.startFrame, this.endFrame)
             }
         })
 

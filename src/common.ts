@@ -3,15 +3,17 @@ import { tmpdir } from "node:os"
 import { isAbsolute, join } from "node:path"
 import { EventEmitter } from "node:events"
 
+export type ProgressCallback = (progress: number, start: number, end?: number) => void
+
 export interface ExternalProcess {
     onExit(callback: (code: number|null) => void): void
-    onProgress(callback: (progress: number) => void): void
+    onProgress(callback: ProgressCallback): void
 }
 
-export interface ProcessEventEmmiter extends EventEmitter {
-    on(event: "progress", listener: (progress: number) => void): this
-    once(event: "progress", listener: (progress: number) => void): this
-    emit(event: "progress", progress: number): boolean
+export interface ProcessEventEmmiter {
+    on(event: "progress", listener: ProgressCallback): this
+    once(event: "progress", listener: ProgressCallback): this
+    emit(event: "progress", ...args: Parameters<ProgressCallback>): boolean
 
     on(event: "done", listener: (code: number|null) => void): this
     once(event: "done", listener: (code: number|null) => void): this

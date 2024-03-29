@@ -60,13 +60,13 @@ export async function run(argv : string[] = [], development = false) : Promise<v
 
     try {
         console.log("launching playback dolphin...")
-        const {onDolphinProgress, onDolphinExit, startFrame, endFrame, onDone} = createSlptoVideoProcess({dolphinPath: dolphinPath, inputFile: inputFile, workDir: workDir, meleeIso: meleeIso, timeout: args.m, outputFilename: outputPath, enableWidescreen: args.w, stdout, stderr})
+        const {onDolphinProgress, onDolphinExit, onDone} = createSlptoVideoProcess({dolphinPath: dolphinPath, inputFile: inputFile, workDir: workDir, meleeIso: meleeIso, timeout: args.m, outputFilename: outputPath, enableWidescreen: args.w, stdout, stderr})
         
-        if (!args.v) {
-            const normalizedLast = endFrame - startFrame
-            
-            onDolphinProgress((frame) => {
+        if (!args.v) {            
+            onDolphinProgress((frame, startFrame, endFrame) => {
+                endFrame = endFrame !== undefined? endFrame : startFrame
                 const normalizedCurrent = frame - startFrame
+                const normalizedLast = endFrame - startFrame
                 const percent = normalizedCurrent / normalizedLast * 100
 
                 process.stdout.write(`\rrendering frames: ${percent.toFixed(1)}% (${normalizedCurrent}/${normalizedLast})`)
