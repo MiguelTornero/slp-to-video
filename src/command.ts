@@ -6,8 +6,6 @@ import { hideBin } from 'yargs/helpers'
 import { DEFAULT_ARGUMENTS, createSlptoVideoProcess } from "./slp-to-video";
 import { join } from "path";
 import { cwd } from "process";
-import { SlippiGame } from "@slippi/slippi-js";
-import { DolphinProcessFactory } from "./dolphin";
 
 interface Arguments {
     [x: string]: unknown,
@@ -36,32 +34,31 @@ async function parseArgv(argv : string[]) : Promise<Arguments> {
 }
 
 export async function run(argv : string[] = [], development = false) : Promise<void> {
-    let workDir : string | null = null
     argv = hideBin(argv)
+    const args : Arguments = await parseArgv(argv) // can exit the program
+
+    const workDir = getWorkDir(development)
+
+    const slp_file = args.slp_file
+    const dolphinPath = join(__dirname, "..", "assets", "playback.appimage") // TODO: change to adapt to different platforms (Win, Mac)
+
+    await access(dolphinPath, constants.R_OK | constants.X_OK)
+
+    const inputFile = toAbsolutePath(slp_file, cwd())
+    const meleeIso = toAbsolutePath(args.i, cwd())
+    const outputPath = toAbsolutePath(args.o, cwd())
+
+    let stdout = undefined, stderr = undefined
+    if (args.v) {
+        console.log("workdir:", workDir)
+        console.log("slp file:", inputFile)
+        console.log("dolphin:", dolphinPath)
+        console.log("iso:", meleeIso)
+        stdout = process.stdout
+        stderr = process.stderr
+    }
 
     try {
-        const args : Arguments = await parseArgv(argv)
-        const slp_file = args.slp_file
-        const dolphinPath = join(__dirname, "..", "assets", "playback.appimage") // TODO: change to adapt to different platforms (Win, Mac)
-
-        workDir = getWorkDir(development)
-
-        await access(dolphinPath, constants.R_OK | constants.X_OK)
-
-        const inputFile = toAbsolutePath(slp_file, cwd())
-        const meleeIso = toAbsolutePath(args.i, cwd())
-        const outputPath = toAbsolutePath(args.o, cwd())
-        
-        let stdout = undefined, stderr = undefined
-        if (args.v) {
-            console.log("workdir:", workDir)
-            console.log("slp file:", inputFile)
-            console.log("dolphin:", dolphinPath)
-            console.log("iso:", meleeIso)
-            stdout = process.stdout
-            stderr = process.stderr
-        }
-
         console.log("launching playback dolphin...")
         const {onDolphinProgress, onDolphinExit, startFrame, endFrame, onDone} = createSlptoVideoProcess({dolphinPath: dolphinPath, inputFile: inputFile, workDir: workDir, meleeIso: meleeIso, timeout: args.m, outputFilename: outputPath, enableWidescreen: args.w, stdout, stderr})
         
@@ -86,10 +83,9 @@ export async function run(argv : string[] = [], development = false) : Promise<v
             console.log("dolphin process finished")
         })
 
-        await new Promise<void>((res) => {
+        await new Promise<void>((res, rej) => {
             const timer = setTimeout(() => {
-                console.error("reached timeout timer")
-                res()
+                rej(new Error("reached timeout timer"))
             }, args.m)
             onDone(() => {
                 clearTimeout(timer)
@@ -98,9 +94,10 @@ export async function run(argv : string[] = [], development = false) : Promise<v
         })
     }
     finally {
-        console.log("cleaning up...")
-        if (workDir !== null && !development) {
+        console.log("\ncleaning up...")
+        if (!development) {
             await rm(workDir, {recursive: true, force: true})
        }
+       // add orphaned child process handling here, if necessary
     }
 }

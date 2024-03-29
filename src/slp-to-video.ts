@@ -1,8 +1,7 @@
-import { fillUndefinedFields } from "./common"
+import { ProcessEventEmmiter, fillUndefinedFields } from "./common"
 import { EventEmitter, Writable } from "stream"
 import { DolphinProcessFactory, ValidInternalResolution } from "./dolphin"
 import { mergeAviVideoAndAudio } from "./ffmpeg"
-import { join } from "path"
 
 type SlpToVideoArguments = {
     inputFile: string,
@@ -37,7 +36,7 @@ export const DEFAULT_ARGUMENTS : Readonly<SlpToVideoArguments> = {
 export function createSlptoVideoProcess(opts: Partial<SlpToVideoArguments> = {}) {
     const { workDir, inputFile, dolphinPath, meleeIso, timeout, enableWidescreen, outputFilename, stdout, stderr } = fillUndefinedFields(opts, DEFAULT_ARGUMENTS)
 
-    const eventEmitter = new EventEmitter() // used for the overall process
+    const eventEmitter : ProcessEventEmmiter = new EventEmitter() // used for the overall process
 
     const dolphinFactory = new DolphinProcessFactory({dolphinPath, slpInputFile: inputFile, workDir, meleeIso, timeout, enableWidescreen, stdout, stderr})
     const dolphinProcess = dolphinFactory.spawnProcess()
@@ -50,7 +49,7 @@ export function createSlptoVideoProcess(opts: Partial<SlpToVideoArguments> = {})
 
         try { 
             mergeAviVideoAndAudio(dolphinFactory.dumpVideoFile, dolphinFactory.dumpAudioFile, outputFilename)
-            eventEmitter.emit("done", outputFilename)
+            eventEmitter.emit("done", 0)
         }
         catch (e) {
             eventEmitter.emit("done", null)
@@ -64,7 +63,7 @@ export function createSlptoVideoProcess(opts: Partial<SlpToVideoArguments> = {})
         onDolphinExit(callback: (code: number | null) => void) {
             dolphinProcess.onExit(callback)
         },
-        onDone(callback: (outputFile: string|null) => void) {
+        onDone(callback: (code: number|null) => void) {
             eventEmitter.on("done", callback)
         },
         startFrame: dolphinFactory.startFrame,
