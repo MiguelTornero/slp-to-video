@@ -1,7 +1,7 @@
 import { ProcessEventEmmiter, fillUndefinedFields, ProgressCallback } from "./common"
 import { EventEmitter, Writable } from "stream"
 import { DolphinProcessFactory, ValidInternalResolution } from "./dolphin"
-import { mergeAviVideoAndAudio } from "./ffmpeg"
+import { AudioVideoMergeProcessFactory, mergeAviVideoAndAudio } from "./ffmpeg"
 
 type SlpToVideoArguments = {
     inputFile: string,
@@ -36,24 +36,25 @@ export const DEFAULT_ARGUMENTS : Readonly<SlpToVideoArguments> = {
 export function createSlptoVideoProcess(opts: Partial<SlpToVideoArguments> = {}) {
     const { workDir, inputFile, dolphinPath, meleeIso, timeout, enableWidescreen, outputFilename, stdout, stderr } = fillUndefinedFields(opts, DEFAULT_ARGUMENTS)
 
-    const eventEmitter : ProcessEventEmmiter = new EventEmitter() // used for the overall process
+    const overallEventEmitter : ProcessEventEmmiter = new EventEmitter() // used for the overall process
+    const ffmpegEventEmitter : ProcessEventEmmiter = new EventEmitter()
 
     const dolphinFactory = new DolphinProcessFactory({dolphinPath, slpInputFile: inputFile, workDir, meleeIso, timeout, enableWidescreen, stdout, stderr})
     const dolphinProcess = dolphinFactory.spawnProcess()
 
+    const ffmpegFactory = new AudioVideoMergeProcessFactory({videoFile: dolphinFactory.dumpVideoFile, audioFile: dolphinFactory.dumpAudioFile, outputFile: outputFilename, stdout, stderr})
+
     dolphinProcess.onExit((code) => {
         if (code !== 0) {
-            eventEmitter.emit("done", null)
+            overallEventEmitter.emit("done", null)
             return
         }
 
-        try { 
-            mergeAviVideoAndAudio(dolphinFactory.dumpVideoFile, dolphinFactory.dumpAudioFile, outputFilename)
-            eventEmitter.emit("done", 0)
-        }
-        catch (e) {
-            eventEmitter.emit("done", null)
-        }
+        const ffmpegProcess = ffmpegFactory.spawnProcess()
+        ffmpegProcess.onExit((code) => {
+            ffmpegEventEmitter.emit("done", code)
+            overallEventEmitter.emit("done", code)
+        }) 
     })
 
     return {
@@ -63,8 +64,14 @@ export function createSlptoVideoProcess(opts: Partial<SlpToVideoArguments> = {})
         onDolphinExit(callback: (code: number | null) => void) {
             dolphinProcess.onExit(callback)
         },
+        onFfmpegProgress(callback: ProgressCallback) {
+            ffmpegEventEmitter.on("progress", callback)
+        },
+        onFfmpegDone(callback: (code: number | null) => void) {
+            ffmpegEventEmitter.on("done", callback)
+        },
         onDone(callback: (code: number|null) => void) {
-            eventEmitter.on("done", callback)
+            overallEventEmitter.on("done", callback)
         },
         startFrame: dolphinFactory.startFrame,
         endFrame: dolphinFactory.endFrame

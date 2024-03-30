@@ -60,7 +60,7 @@ export async function run(argv : string[] = [], development = false) : Promise<v
 
     try {
         console.log("launching playback dolphin...")
-        const {onDolphinProgress, onDolphinExit, onDone} = createSlptoVideoProcess({dolphinPath: dolphinPath, inputFile: inputFile, workDir: workDir, meleeIso: meleeIso, timeout: args.m, outputFilename: outputPath, enableWidescreen: args.w, stdout, stderr})
+        const {onDolphinProgress, onDolphinExit, onDone, onFfmpegDone} = createSlptoVideoProcess({dolphinPath: dolphinPath, inputFile: inputFile, workDir: workDir, meleeIso: meleeIso, timeout: args.m, outputFilename: outputPath, enableWidescreen: args.w, stdout, stderr})
         
         if (!args.v) {            
             onDolphinProgress((frame, startFrame, endFrame) => {
@@ -81,6 +81,16 @@ export async function run(argv : string[] = [], development = false) : Promise<v
             }
             
             console.log("dolphin process finished")
+            console.log("merging dump files...")
+        })
+
+        onFfmpegDone((code) => {
+            if (code !== 0) {
+                console.error("ffmpeg exited abnormally")
+            }
+            else {
+                console.log("done")
+            }
         })
 
         await new Promise<void>((res, rej) => {

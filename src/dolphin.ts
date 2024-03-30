@@ -1,5 +1,5 @@
 import { EventEmitter } from "node:events";
-import { ExternalProcess, ProcessEventEmmiter, assetDir } from "./common";
+import { ExternalProcess, ProcessEventEmmiter, ProcessFactory, assetDir } from "./common";
 import { join } from "node:path";
 import { copyFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { spawn } from "node:child_process";
@@ -46,7 +46,7 @@ type JSONQueueItem = {
 /**
  * Utility class for creating dolphin processes
  */
-export class DolphinProcessFactory {
+export class DolphinProcessFactory implements ProcessFactory {
     static dolphinIniFilename = "Dolphin.ini"
     static gfxIniFilename = "GFX.ini"
     static geckoFilename = "GALE01.ini"

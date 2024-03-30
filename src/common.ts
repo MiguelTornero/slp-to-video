@@ -1,7 +1,6 @@
 import { mkdtempSync, existsSync, mkdirSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { isAbsolute, join } from "node:path"
-import { EventEmitter } from "node:events"
 
 export type ProgressCallback = (progress: number, start: number, end?: number) => void
 
@@ -18,6 +17,10 @@ export interface ProcessEventEmmiter {
     on(event: "done", listener: (code: number|null) => void): this
     once(event: "done", listener: (code: number|null) => void): this
     emit(event: "done", code: number|null): boolean
+}
+
+export interface ProcessFactory {
+    spawnProcess() : ExternalProcess
 }
 
 export function getWorkDir(development = false, prefix = "slp-to-video-") {
