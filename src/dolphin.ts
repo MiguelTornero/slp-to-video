@@ -94,6 +94,7 @@ export class DolphinProcessFactory implements ProcessFactory {
     // used for reporting progress
     progressStart: number
     progressEnd?: number
+    lastMsg: string
 
     constructor({dolphinPath, slpInputFile, workDir, meleeIso, timeout, enableWidescreen, stdout, stderr, startFrame, endFrame}: {dolphinPath: string, slpInputFile: string, workDir: string, meleeIso: string, timeout: number, enableWidescreen: boolean, stdout?: Writable, stderr?: Writable, startFrame?: number, endFrame?: number}) {
         this.dolphinPath = dolphinPath
@@ -130,6 +131,7 @@ export class DolphinProcessFactory implements ProcessFactory {
             }
         }
 
+        this.lastMsg = `[CURRENT_FRAME] ${this.progressEnd}\n`
     }
 
     prepareWorkDir() {
@@ -194,7 +196,7 @@ export class DolphinProcessFactory implements ProcessFactory {
             const msgStr = msg.toString()
 
             // Kill dolphin process after the game finishes
-            if (msgStr.startsWith("[NO_GAME]")) {
+            if (msgStr.startsWith("[NO_GAME]") || msgStr === this.lastMsg) {
                 dolphinProcess.kill()
                 return
             }
