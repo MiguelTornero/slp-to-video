@@ -1,11 +1,13 @@
 import { access, constants, rm } from "fs/promises";
-import { createLoadingMessagePrinter, getWorkDir, toAbsolutePath } from "./common";
+import { assetDir, createLoadingMessagePrinter, getWorkDir, parseTimeStamp, toAbsolutePath } from "./common";
 import yargs = require("yargs");
 
 import { hideBin } from 'yargs/helpers'
 import { DEFAULT_ARGUMENTS, createSlptoVideoProcess } from "./slp-to-video";
 import { join } from "path";
 import { cwd } from "process";
+
+const FRAME_RATE = 60 as const
 
 interface Arguments {
     [x: string]: unknown,
@@ -16,6 +18,8 @@ interface Arguments {
     o: string,
     v?: boolean,
     w?: boolean,
+    f?: string,
+    t?: string,
     _: (string|number)[]
 }
 
@@ -27,10 +31,34 @@ async function parseArgv(argv : string[]) : Promise<Arguments> {
         m: {type: "number", alias: "timeout", describe: "Maximum amount of miliseconds the Dolphin process is allowed to run", default: DEFAULT_ARGUMENTS.timeout},
         o: {type: "string", alias: "output", describe: "Name of the output file", default: DEFAULT_ARGUMENTS.outputFilename},
         v: {type: "boolean", alias: "verbose", describe: "Enable extra outpug"},
-        w: {type: "boolean", alias: "widescreen", describe: "Enable widescreen resolution (16:9}"}
+        w: {type: "boolean", alias: "widescreen", describe: "Enable widescreen resolution (16:9)"},
+        f: {type: "string", alias: "from", describe: "The frame you would like to start the replay on. Can also be provided as a timestamp with the format MM:SS"},
+        t: {type: "string", alias: "to", describe: "The frame you would like to end the replay on. Can also be provided as a timestamp with the format MM:SS"}
     })
     .strict()
     .parse(argv)
+}
+
+/**
+ * Function to parse the user input for the starting or last frame of the replay
+ * @param input Input string, which can be either the frame number itself, or a timestamp with format HH:MM:SS
+ * @param startFrame The starting frame corresponding to timestanp 00:00, defaults to -123
+ * @param framerate The number of frames in a second, defaults to 60
+ * @returns If the input sting wasn't a valid input, it returns null. Otherwise it returns the frame number
+ */
+function parseFrameInput(input: string, startFrame = -123, framerate = 60) {
+    if (input.match(/^-?\d+$/)) {
+        // input is numeric, so it's a frame input
+        return parseInt(input)
+    }
+
+    const time = parseTimeStamp(input)
+    if (time === null) {
+        // input wasn't a timestamp, so no valid input was given
+        return null
+    }
+
+    return Math.round(time.hours * 3600 + time.minutes * 60 + time.seconds) * framerate + startFrame
 }
 
 export async function run(argv : string[] = [], development = false) : Promise<void> {
@@ -40,7 +68,7 @@ export async function run(argv : string[] = [], development = false) : Promise<v
     const workDir = getWorkDir(development)
 
     const slp_file = args.slp_file
-    const dolphinPath = join(__dirname, "..", "assets", "playback.appimage") // TODO: change to adapt to different platforms (Win, Mac)
+    const dolphinPath = join(assetDir, "playback.appimage") // TODO: change to adapt to different platforms (Win, Mac)
 
     await access(dolphinPath, constants.R_OK | constants.X_OK)
 
@@ -48,7 +76,10 @@ export async function run(argv : string[] = [], development = false) : Promise<v
     const meleeIso = toAbsolutePath(args.i, cwd())
     const outputPath = toAbsolutePath(args.o, cwd())
 
-    const fmmpegLoadingPrinter = createLoadingMessagePrinter("converting dump files")
+    const startFrame = args.f !== undefined ? parseFrameInput(args.f) : undefined
+    const endFrame = args.t !== undefined ? parseFrameInput(args.t) : undefined
+
+    const fmmpegLoadingPrinter = createLoadingMessagePrinter("converting dump files", process.stdout, 500)
 
     let stdout = undefined, stderr = undefined
     if (args.v) {
@@ -56,13 +87,24 @@ export async function run(argv : string[] = [], development = false) : Promise<v
         console.log("slp file:", inputFile)
         console.log("dolphin:", dolphinPath)
         console.log("iso:", meleeIso)
+        console.log("start frame:", startFrame)
+        console.log("end frame:", endFrame)
         stdout = process.stdout
         stderr = process.stderr
     }
 
     try {
+        if (startFrame === null) {
+            //there was an error parsing the frame input
+            throw new Error("invalid start frame input")
+        }
+        if (endFrame === null) {
+            // same for end frame
+            throw new Error("invalid end frame input")
+        }
+
         console.log("launching playback dolphin...")
-        const {onDolphinProgress, onDolphinExit, onDone, onFfmpegDone} = createSlptoVideoProcess({dolphinPath: dolphinPath, inputFile: inputFile, workDir: workDir, meleeIso: meleeIso, timeout: args.m, outputFilename: outputPath, enableWidescreen: args.w, stdout, stderr})
+        const {onDolphinProgress, onDolphinExit, onDone, onFfmpegDone} = createSlptoVideoProcess({dolphinPath: dolphinPath, inputFile: inputFile, workDir: workDir, meleeIso: meleeIso, timeout: args.m, outputFilename: outputPath, enableWidescreen: args.w, stdout, stderr, startFrame, endFrame})
         
         if (!args.v) {            
             onDolphinProgress((frame, startFrame, endFrame) => {

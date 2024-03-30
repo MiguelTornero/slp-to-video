@@ -89,9 +89,13 @@ export class DolphinProcessFactory implements ProcessFactory {
     dumpVideoFile: string
 
     endFrame?: number
-    startFrame: number
+    startFrame?: number
 
-    constructor({dolphinPath, slpInputFile, workDir, meleeIso, timeout, enableWidescreen, stdout, stderr}: {dolphinPath: string, slpInputFile: string, workDir: string, meleeIso: string, timeout: number, enableWidescreen: boolean, stdout?: Writable, stderr?: Writable}) {
+    // used for reporting progress
+    progressStart: number
+    progressEnd?: number
+
+    constructor({dolphinPath, slpInputFile, workDir, meleeIso, timeout, enableWidescreen, stdout, stderr, startFrame, endFrame}: {dolphinPath: string, slpInputFile: string, workDir: string, meleeIso: string, timeout: number, enableWidescreen: boolean, stdout?: Writable, stderr?: Writable, startFrame?: number, endFrame?: number}) {
         this.dolphinPath = dolphinPath
         this.enableWidescreen = enableWidescreen
         this.workDir = workDir
@@ -106,15 +110,24 @@ export class DolphinProcessFactory implements ProcessFactory {
         this.dumpAudioFile = join(workDir, DolphinProcessFactory.audioDumpFilename)
         this.dumpVideoFile = join(workDir, DolphinProcessFactory.videoDumpFilename)
 
-        this.startFrame = Frames.FIRST
-        const slippiGame = new SlippiGame(slpInputFile)
-        const endFrame = slippiGame.getMetadata()?.lastFrame
-        
-        if (endFrame === null) {
-            this.endFrame = undefined
+        this.startFrame = startFrame
+        this.endFrame = endFrame
+
+        if (startFrame !== undefined) {
+            this.progressStart = startFrame
         }
         else {
-            this.endFrame = endFrame
+            this.progressStart = Frames.FIRST
+        }
+
+        if (endFrame !== undefined) {
+            this.progressEnd = endFrame + 1
+        }
+        else {
+            const lastFrame = (new SlippiGame(slpInputFile)).getMetadata()?.lastFrame
+            if (lastFrame !== null) {
+                this.progressEnd = lastFrame
+            }
         }
 
     }
@@ -142,6 +155,12 @@ export class DolphinProcessFactory implements ProcessFactory {
                     path: this.slpInputFile
                 }
             ]
+        }
+        if (this.startFrame !== undefined) {
+            inputJsonData.queue[0].startFrame = this.startFrame
+        }
+        if (this.endFrame !== undefined) {
+            inputJsonData.queue[0].endFrame = this.endFrame
         }
     
         writeFileSync(this.inputJsonPath, JSON.stringify(inputJsonData))
@@ -183,7 +202,7 @@ export class DolphinProcessFactory implements ProcessFactory {
             const match = msgStr.match(/\[CURRENT_FRAME\]\s+(-?\d+)/)
             if (match) {
                 const frame = parseInt(match[1])
-                eventEmitter.emit("progress", frame, this.startFrame, this.endFrame)
+                eventEmitter.emit("progress", frame, this.progressStart, this.progressEnd)
             }
         })
 

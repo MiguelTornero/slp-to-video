@@ -10,11 +10,12 @@ type SlpToVideoArguments = {
     dolphinPath: string,
     internalResolution: ValidInternalResolution,
     outputFilename: string,
-    outputFormat: "avi" | "mp4",
     enableWidescreen: boolean,
     timeout: number,
     stdout?: Writable,
-    stderr?: Writable
+    stderr?: Writable,
+    startFrame?: number,
+    endFrame?: number
 }
 
 const TEN_MINUTES_TO_MS = 10 * 60 * 1000
@@ -26,20 +27,21 @@ export const DEFAULT_ARGUMENTS : Readonly<SlpToVideoArguments> = {
     dolphinPath: "playback-slippi",
     internalResolution: "720p",
     outputFilename: "output.avi",
-    outputFormat: "avi",
     enableWidescreen: false,
     timeout: TEN_MINUTES_TO_MS,
     stderr: undefined,
-    stdout: undefined
+    stdout: undefined,
+    startFrame: undefined,
+    endFrame: undefined
 }
 
 export function createSlptoVideoProcess(opts: Partial<SlpToVideoArguments> = {}) {
-    const { workDir, inputFile, dolphinPath, meleeIso, timeout, enableWidescreen, outputFilename, stdout, stderr } = fillUndefinedFields(opts, DEFAULT_ARGUMENTS)
+    const { workDir, inputFile, dolphinPath, meleeIso, timeout, enableWidescreen, outputFilename, stdout, stderr, startFrame, endFrame } = fillUndefinedFields(opts, DEFAULT_ARGUMENTS)
 
     const overallEventEmitter : ProcessEventEmmiter = new EventEmitter() // used for the overall process
     const ffmpegEventEmitter : ProcessEventEmmiter = new EventEmitter()
 
-    const dolphinFactory = new DolphinProcessFactory({dolphinPath, slpInputFile: inputFile, workDir, meleeIso, timeout, enableWidescreen, stdout, stderr})
+    const dolphinFactory = new DolphinProcessFactory({dolphinPath, slpInputFile: inputFile, workDir, meleeIso, timeout, enableWidescreen, stdout, stderr, startFrame, endFrame})
     const dolphinProcess = dolphinFactory.spawnProcess()
 
     const ffmpegFactory = new AudioVideoMergeProcessFactory({videoFile: dolphinFactory.dumpVideoFile, audioFile: dolphinFactory.dumpAudioFile, outputFile: outputFilename, stdout, stderr})

@@ -111,6 +111,4 @@ export function parseTimeStamp(timestamp: string) {
     return output
 }
 
-export function timeStampToFrame(timestamp: string, startFrame: number) {}
-
 export const assetDir = join(__dirname, "..", "assets")
