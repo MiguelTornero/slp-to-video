@@ -80,4 +80,37 @@ export function createLoadingMessagePrinter(message: string, outputStream: Writa
     }
 }
 
+export function parseTimeStamp(timestamp: string) {
+    const match = timestamp.match(/^(\d+:)?(\d+:)?\d+(\.\d+)?$/)
+    if (match === null) {
+        return null
+    }
+
+    const output = {
+        hours: 0,
+        minutes: 0,
+        seconds: 0.0
+    }
+
+    const slices = timestamp.split(":")
+
+    const secondsStr = slices.pop()
+    const minutesStr = slices.pop()
+    const hoursStr = slices.pop()
+
+    if (secondsStr) {
+        output.seconds = parseFloat(secondsStr)
+    }
+    if (minutesStr) {
+        output.minutes = parseInt(minutesStr)
+    }
+    if (hoursStr) {
+        output.hours = parseInt(hoursStr)
+    }
+
+    return output
+}
+
+export function timeStampToFrame(timestamp: string, startFrame: number) {}
+
 export const assetDir = join(__dirname, "..", "assets")
