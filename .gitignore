@@ -12,3 +12,5 @@ tsconfig.tsbuildinfo
 /cache
 #output files
 *.avi
+*.mp4
+*.webm

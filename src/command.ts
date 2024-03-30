@@ -1,5 +1,5 @@
 import { access, constants, rm } from "fs/promises";
-import { getWorkDir, toAbsolutePath } from "./common";
+import { createLoadingMessagePrinter, getWorkDir, toAbsolutePath } from "./common";
 import yargs = require("yargs");
 
 import { hideBin } from 'yargs/helpers'
@@ -48,6 +48,8 @@ export async function run(argv : string[] = [], development = false) : Promise<v
     const meleeIso = toAbsolutePath(args.i, cwd())
     const outputPath = toAbsolutePath(args.o, cwd())
 
+    const fmmpegLoadingPrinter = createLoadingMessagePrinter("converting dump files")
+
     let stdout = undefined, stderr = undefined
     if (args.v) {
         console.log("workdir:", workDir)
@@ -64,8 +66,13 @@ export async function run(argv : string[] = [], development = false) : Promise<v
         
         if (!args.v) {            
             onDolphinProgress((frame, startFrame, endFrame) => {
-                endFrame = endFrame !== undefined? endFrame : startFrame
                 const normalizedCurrent = frame - startFrame
+
+                if (endFrame == undefined) {
+                    process.stdout.write(`\rrendering frames: ???% (${normalizedCurrent}/???`)
+                    return
+                }
+
                 const normalizedLast = endFrame - startFrame
                 const percent = normalizedCurrent / normalizedLast * 100
 
@@ -81,15 +88,20 @@ export async function run(argv : string[] = [], development = false) : Promise<v
             }
             
             console.log("dolphin process finished")
-            console.log("merging dump files...")
+            if (!args.v) {
+                fmmpegLoadingPrinter.start()
+            }
         })
 
         onFfmpegDone((code) => {
+            if (!args.v) {
+                fmmpegLoadingPrinter.stop()
+            }
             if (code !== 0) {
                 console.error("ffmpeg exited abnormally")
             }
             else {
-                console.log("done")
+                console.log("done!")
             }
         })
 

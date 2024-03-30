@@ -1,18 +1,6 @@
-import { spawn, spawnSync } from "node:child_process"
+import { spawn } from "node:child_process"
 import { ExternalProcess, ProcessFactory } from "./common"
 import { Writable } from "node:stream"
-
-export function mergeAviVideoAndAudio(videoFile: string, audioFile: string, output: string) {
-    if (!output.toLowerCase().endsWith(".avi")) {
-        output += ".avi"
-    }
-    return spawnSync("ffmpeg", [
-        "-i", videoFile,
-        "-i", audioFile,
-        "-c", "copy",
-        output
-    ])
-}
 
 export class AudioVideoMergeProcessFactory implements ProcessFactory {
     videoFile : string
@@ -33,6 +21,7 @@ export class AudioVideoMergeProcessFactory implements ProcessFactory {
 
     spawnProcess(): ExternalProcess {
         const args = [
+            "-y",
             "-i", this.videoFile,
             "-i", this.audioFile
         ]

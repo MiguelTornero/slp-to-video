@@ -1,7 +1,7 @@
 import { ProcessEventEmmiter, fillUndefinedFields, ProgressCallback } from "./common"
 import { EventEmitter, Writable } from "stream"
 import { DolphinProcessFactory, ValidInternalResolution } from "./dolphin"
-import { AudioVideoMergeProcessFactory, mergeAviVideoAndAudio } from "./ffmpeg"
+import { AudioVideoMergeProcessFactory } from "./ffmpeg"
 
 type SlpToVideoArguments = {
     inputFile: string,

@@ -1,6 +1,7 @@
 import { mkdtempSync, existsSync, mkdirSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { isAbsolute, join } from "node:path"
+import { Writable } from "node:stream"
 
 export type ProgressCallback = (progress: number, start: number, end?: number) => void
 
@@ -55,6 +56,28 @@ export function toAbsolutePath(path: string, base: string) {
         return path
     }
     return join(base, path)
+}
+
+export function createLoadingMessagePrinter(message: string, outputStream: Writable = process.stdout, intervalMs = 1000, loopingChar = ".", loopingCharMax = 3) {
+    let timer  : NodeJS.Timeout | null = null
+    let charCount = loopingCharMax
+    
+    return {
+        start() {
+            outputStream.write(message + loopingChar.repeat(charCount))
+            timer = setInterval(() => {
+                charCount = (charCount % loopingCharMax) + 1
+                outputStream.write("\r" + message + loopingChar.repeat(charCount) + " ".repeat(loopingCharMax - charCount))
+            }, intervalMs)
+        },
+        stop() {
+            if (timer != null) {
+                clearInterval(timer)
+            }
+            outputStream.write("\n")
+        }
+
+    }
 }
 
 export const assetDir = join(__dirname, "..", "assets")
