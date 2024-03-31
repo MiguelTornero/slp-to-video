@@ -1,13 +1,11 @@
 import { access, constants, rm } from "fs/promises";
-import { assetDir, createLoadingMessagePrinter, getWorkDir, parseTimeStamp, toAbsolutePath } from "./common";
+import { ASSET_DIR, FRAMES_PER_SECOND, createLoadingMessagePrinter, getWorkDir, parseTimeStamp, toAbsolutePath } from "./common";
 import yargs = require("yargs");
 
 import { hideBin } from 'yargs/helpers'
 import { DEFAULT_ARGUMENTS, createSlptoVideoProcess } from "./slp-to-video";
 import { join } from "path";
 import { cwd } from "process";
-
-const FRAME_RATE = 60 as const
 
 interface Arguments {
     [x: string]: unknown,
@@ -46,7 +44,7 @@ async function parseArgv(argv : string[]) : Promise<Arguments> {
  * @param framerate The number of frames in a second, defaults to 60
  * @returns If the input sting wasn't a valid input, it returns null. Otherwise it returns the frame number
  */
-function parseFrameInput(input: string, startFrame = -123, framerate = 60) {
+function parseFrameInput(input: string, startFrame = -123, framerate = FRAMES_PER_SECOND) {
     if (input.match(/^-?\d+$/)) {
         // input is numeric, so it's a frame input
         return parseInt(input)
@@ -68,7 +66,7 @@ export async function run(argv : string[] = [], development = false) : Promise<v
     const workDir = getWorkDir(development)
 
     const slp_file = args.slp_file
-    const dolphinPath = join(assetDir, "playback.appimage") // TODO: change to adapt to different platforms (Win, Mac)
+    const dolphinPath = join(ASSET_DIR, "playback.appimage") // TODO: change to adapt to different platforms (Win, Mac)
 
     await access(dolphinPath, constants.R_OK | constants.X_OK)
 

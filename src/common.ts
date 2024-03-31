@@ -111,4 +111,6 @@ export function parseTimeStamp(timestamp: string) {
     return output
 }
 
-export const assetDir = join(__dirname, "..", "assets")
+export const FRAMES_PER_SECOND = 60 as const
+
+export const ASSET_DIR = join(__dirname, "..", "assets")

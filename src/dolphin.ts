@@ -1,5 +1,5 @@
 import { EventEmitter } from "node:events";
-import { ExternalProcess, ProcessEventEmmiter, ProcessFactory, assetDir } from "./common";
+import { ExternalProcess, ProcessEventEmmiter, ProcessFactory, ASSET_DIR } from "./common";
 import { join } from "node:path";
 import { copyFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { spawn } from "node:child_process";
@@ -138,14 +138,14 @@ export class DolphinProcessFactory implements ProcessFactory {
         mkdirSync(this.workDir, {recursive: true}) // "recursive: true" makes it so it doesn't throw an error if the dir exists
 
         mkdirSync(userConfigDir, {recursive: true})
-        copyFileSync(join(assetDir, DolphinProcessFactory.dolphinIniFilename), join(userConfigDir, DolphinProcessFactory.dolphinIniFilename))
-        copyFileSync(join(assetDir, DolphinProcessFactory.gfxIniFilename), join(userConfigDir, DolphinProcessFactory.gfxIniFilename))
+        copyFileSync(join(ASSET_DIR, DolphinProcessFactory.dolphinIniFilename), join(userConfigDir, DolphinProcessFactory.dolphinIniFilename))
+        copyFileSync(join(ASSET_DIR, DolphinProcessFactory.gfxIniFilename), join(userConfigDir, DolphinProcessFactory.gfxIniFilename))
 
         if (this.enableWidescreen) {
             const userGameSettingsDir = join(this.userDir, "GameSettings")
     
             mkdirSync(userGameSettingsDir, {recursive: true})
-            copyFileSync(join(assetDir, DolphinProcessFactory.geckoFilename), join(userGameSettingsDir, DolphinProcessFactory.geckoFilename))
+            copyFileSync(join(ASSET_DIR, DolphinProcessFactory.geckoFilename), join(userGameSettingsDir, DolphinProcessFactory.geckoFilename))
         }
 
         const inputJsonData : JSONInputFile = {
