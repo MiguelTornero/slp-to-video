@@ -10,8 +10,9 @@ export class AudioVideoMergeProcessFactory implements ProcessFactory {
     stdout?: Writable
     stderr?: Writable
     startCutoffSeconds?: number
+    volume: number
 
-    constructor({videoFile, audioFile, outputFile, bitrate, stdout, stderr, startCutoffSeconds} : {videoFile: string, audioFile: string, outputFile: string, bitrate?: number, stdout?: Writable, stderr?: Writable, startCutoffSeconds?: number}) {
+    constructor({videoFile, audioFile, outputFile, bitrate, stdout, stderr, startCutoffSeconds, volume} : {videoFile: string, audioFile: string, outputFile: string, bitrate?: number, stdout?: Writable, stderr?: Writable, startCutoffSeconds?: number, volume: number}) {
         this.videoFile = videoFile
         this.audioFile = audioFile
         this.outputFile = outputFile
@@ -19,6 +20,7 @@ export class AudioVideoMergeProcessFactory implements ProcessFactory {
         this.stdout = stdout
         this.stderr = stderr
         this.startCutoffSeconds = startCutoffSeconds
+        this.volume = volume
     }
 
     spawnProcess(): ExternalProcess {
@@ -26,13 +28,20 @@ export class AudioVideoMergeProcessFactory implements ProcessFactory {
 
         const args : string[] = [
             "-i", this.videoFile,
-            "-i", this.audioFile,    
-            "-y",
-            "-progress", "pipe:1"
+            "-i", this.audioFile
         ]
 
+        if (this.volume !== 1) {
+            args.push("-af", `volume=${this.volume.toFixed(3)}`)
+        }
+
+        args.push(
+            "-y",
+            "-progress", "pipe:1"
+        )
+
         if (this.outputFile.toLowerCase().endsWith(".avi")) {
-            args.push("-c", "copy") // speeds up operation if the output file is also AVI
+            args.push("-c:v", "copy") // speeds up operation if the output file is also AVI
         }
 
         if (this.startCutoffSeconds !== undefined && this.startCutoffSeconds > 0) {

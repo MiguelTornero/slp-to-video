@@ -18,6 +18,7 @@ interface Arguments {
     w?: boolean,
     f?: string,
     t?: string,
+    V: number,
     _: (string|number)[]
 }
 
@@ -31,7 +32,8 @@ async function parseArgv(argv : string[]) : Promise<Arguments> {
         v: {type: "boolean", alias: "verbose", describe: "Enable extra outpug"},
         w: {type: "boolean", alias: "widescreen", describe: "Enable widescreen resolution (16:9)"},
         f: {type: "string", alias: "from", describe: "The frame you would like to start the replay on. Can also be provided as a timestamp with the format MM:SS"},
-        t: {type: "string", alias: "to", describe: "The frame you would like to end the replay on. Can also be provided as a timestamp with the format MM:SS"}
+        t: {type: "string", alias: "to", describe: "The frame you would like to end the replay on. Can also be provided as a timestamp with the format MM:SS"},
+        V: {type: "number", alias: "volume", describe: "Volume multipier for the output file", default: DEFAULT_ARGUMENTS.volume},
     })
     .strict()
     .parse(argv)
@@ -102,7 +104,7 @@ export async function run(argv : string[] = [], development = false) : Promise<v
             throw new Error("invalid end frame input")
         }
 
-        const {onDolphinProgress, onDolphinExit, onDone, onFfmpegDone, onFfmpegProgress} = createSlptoVideoProcess({dolphinPath: dolphinPath, inputFile: inputFile, workDir: workDir, meleeIso: meleeIso, timeout: args.m, outputFilename: outputPath, enableWidescreen: args.w, stdout, stderr, startFrame, endFrame})
+        const {onDolphinProgress, onDolphinExit, onDone, onFfmpegDone, onFfmpegProgress} = createSlptoVideoProcess({dolphinPath: dolphinPath, inputFile: inputFile, workDir: workDir, meleeIso: meleeIso, timeout: args.m, outputFilename: outputPath, enableWidescreen: args.w, stdout, stderr, startFrame, endFrame, volume: args.V})
         
         if (!args.v) {
             dolphinLoadingPrinter.start()

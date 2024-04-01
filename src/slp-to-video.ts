@@ -17,7 +17,8 @@ type SlpToVideoArguments = {
     stderr?: Writable,
     startFrame?: number,
     endFrame?: number,
-    startPaddingFrames: number
+    startPaddingFrames: number,
+    volume: number
 }
 
 const TEN_MINUTES_TO_MS = 10 * 60 * 1000
@@ -35,11 +36,12 @@ export const DEFAULT_ARGUMENTS : Readonly<SlpToVideoArguments> = {
     stdout: undefined,
     startFrame: undefined,
     endFrame: undefined,
-    startPaddingFrames: 120
+    startPaddingFrames: 120,
+    volume: 0.25
 }
 
 export function createSlptoVideoProcess(opts: Partial<SlpToVideoArguments> = {}) {
-    const { workDir, inputFile, dolphinPath, meleeIso, timeout, enableWidescreen, outputFilename, stdout, stderr, startFrame, endFrame, startPaddingFrames } = fillUndefinedFields(opts, DEFAULT_ARGUMENTS)
+    const { workDir, inputFile, dolphinPath, meleeIso, timeout, enableWidescreen, outputFilename, stdout, stderr, startFrame, endFrame, startPaddingFrames, volume } = fillUndefinedFields(opts, DEFAULT_ARGUMENTS)
 
     let _startFrame : number | undefined = undefined, startCutoffSeconds : number | undefined = undefined
     if (startFrame !== undefined) {
@@ -53,7 +55,7 @@ export function createSlptoVideoProcess(opts: Partial<SlpToVideoArguments> = {})
     const dolphinFactory = new DolphinProcessFactory({dolphinPath, slpInputFile: inputFile, workDir, meleeIso, timeout, enableWidescreen, stdout, stderr, startFrame: _startFrame, endFrame})
     const dolphinProcess = dolphinFactory.spawnProcess()
 
-    const ffmpegFactory = new AudioVideoMergeProcessFactory({videoFile: dolphinFactory.dumpVideoFile, audioFile: dolphinFactory.dumpAudioFile, outputFile: outputFilename, stdout, stderr, startCutoffSeconds})
+    const ffmpegFactory = new AudioVideoMergeProcessFactory({videoFile: dolphinFactory.dumpVideoFile, audioFile: dolphinFactory.dumpAudioFile, outputFile: outputFilename, stdout, stderr, startCutoffSeconds, volume})
 
     dolphinProcess.onExit((code) => {
         if (code !== 0) {
