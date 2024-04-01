@@ -78,6 +78,8 @@ export async function run(argv : string[] = [], development = false) : Promise<v
     const endFrame = args.t !== undefined ? parseFrameInput(args.t) : undefined
 
     const fmmpegLoadingPrinter = createLoadingMessagePrinter("converting dump files", process.stdout, 500)
+    const dolphinLoadingPrinter = createLoadingMessagePrinter("opening playback dolphin", process.stdout, 500)
+    let dolphinRunning = false
 
     let stdout = undefined, stderr = undefined
     if (args.v) {
@@ -101,11 +103,15 @@ export async function run(argv : string[] = [], development = false) : Promise<v
             throw new Error("invalid end frame input")
         }
 
-        console.log("launching playback dolphin...")
         const {onDolphinProgress, onDolphinExit, onDone, onFfmpegDone} = createSlptoVideoProcess({dolphinPath: dolphinPath, inputFile: inputFile, workDir: workDir, meleeIso: meleeIso, timeout: args.m, outputFilename: outputPath, enableWidescreen: args.w, stdout, stderr, startFrame, endFrame})
         
-        if (!args.v) {            
+        if (!args.v) {
+            dolphinLoadingPrinter.start()
             onDolphinProgress((frame, startFrame, endFrame) => {
+                if (!dolphinRunning) {
+                    dolphinRunning = true
+                    dolphinLoadingPrinter.stop()
+                }
                 const normalizedCurrent = frame - startFrame
 
                 if (endFrame == undefined) {

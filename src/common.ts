@@ -64,6 +64,9 @@ export function createLoadingMessagePrinter(message: string, outputStream: Writa
     
     return {
         start() {
+            if (timer !== null) {
+                return
+            }
             outputStream.write(message + loopingChar.repeat(charCount))
             timer = setInterval(() => {
                 charCount = (charCount % loopingCharMax) + 1
@@ -71,10 +74,13 @@ export function createLoadingMessagePrinter(message: string, outputStream: Writa
             }, intervalMs)
         },
         stop() {
-            if (timer != null) {
-                clearInterval(timer)
+            if (timer === null) {
+                return false
             }
+            clearInterval(timer)
+            timer = null
             outputStream.write("\n")
+            return true
         }
 
     }
