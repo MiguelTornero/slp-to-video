@@ -62,6 +62,7 @@ export function createSlptoVideoProcess(opts: Partial<SlpToVideoArguments> = {})
         }
 
         const ffmpegProcess = ffmpegFactory.spawnProcess()
+        ffmpegProcess.onProgress((progress, start, end) => ffmpegEventEmitter.emit("progress", progress, start, end))
         ffmpegProcess.onExit((code) => {
             ffmpegEventEmitter.emit("done", code)
             overallEventEmitter.emit("done", code)

@@ -206,13 +206,9 @@ export class DolphinProcessFactory implements ProcessFactory {
             }
         })
 
-        dolphinProcess.on("exit", (code) => {
-            eventEmitter.emit("done", code)
-        })
-
         return {
             onExit(callback) {
-                eventEmitter.on("done", callback)
+                dolphinProcess.on("exit", callback)
             },
             onProgress(callback) {
                 eventEmitter.on("progress", callback)

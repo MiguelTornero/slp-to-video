@@ -1,5 +1,5 @@
 import { access, constants, rm } from "fs/promises";
-import { ASSET_DIR, FRAMES_PER_SECOND, createLoadingMessagePrinter, getWorkDir, parseTimeStamp, toAbsolutePath } from "./common";
+import { ASSET_DIR, FRAMES_PER_SECOND, createLoadingMessagePrinter, getWorkDir, msToTimestamp, parseTimeStamp, toAbsolutePath } from "./common";
 import yargs = require("yargs");
 
 import { hideBin } from 'yargs/helpers'
@@ -77,7 +77,6 @@ export async function run(argv : string[] = [], development = false) : Promise<v
     const startFrame = args.f !== undefined ? parseFrameInput(args.f) : undefined
     const endFrame = args.t !== undefined ? parseFrameInput(args.t) : undefined
 
-    const fmmpegLoadingPrinter = createLoadingMessagePrinter("converting dump files", process.stdout, 500)
     const dolphinLoadingPrinter = createLoadingMessagePrinter("opening playback dolphin", process.stdout, 500)
     let dolphinRunning = false
 
@@ -103,7 +102,7 @@ export async function run(argv : string[] = [], development = false) : Promise<v
             throw new Error("invalid end frame input")
         }
 
-        const {onDolphinProgress, onDolphinExit, onDone, onFfmpegDone} = createSlptoVideoProcess({dolphinPath: dolphinPath, inputFile: inputFile, workDir: workDir, meleeIso: meleeIso, timeout: args.m, outputFilename: outputPath, enableWidescreen: args.w, stdout, stderr, startFrame, endFrame})
+        const {onDolphinProgress, onDolphinExit, onDone, onFfmpegDone, onFfmpegProgress} = createSlptoVideoProcess({dolphinPath: dolphinPath, inputFile: inputFile, workDir: workDir, meleeIso: meleeIso, timeout: args.m, outputFilename: outputPath, enableWidescreen: args.w, stdout, stderr, startFrame, endFrame})
         
         if (!args.v) {
             dolphinLoadingPrinter.start()
@@ -134,14 +133,17 @@ export async function run(argv : string[] = [], development = false) : Promise<v
             }
             
             console.log("dolphin process finished")
+        })
+        
+        onFfmpegProgress((progressMs) => {
             if (!args.v) {
-                fmmpegLoadingPrinter.start()
+                process.stdout.write(`\rrendering output file: ${msToTimestamp(progressMs)}`)
             }
         })
 
         onFfmpegDone((code) => {
             if (!args.v) {
-                fmmpegLoadingPrinter.stop()
+                process.stdout.write("\n")
             }
             if (code !== 0) {
                 console.error("ffmpeg exited abnormally")

@@ -1,7 +1,7 @@
-import { ok } from "node:assert"
+import { ok, equal } from "node:assert"
 import { spawnSync } from "node:child_process"
 
-import { parseTimeStamp } from "../src/common"
+import { parseTimeStamp, msToTimestamp } from "../src/common"
 
 describe("run cmd", () => {
 
@@ -48,5 +48,16 @@ describe("test timestamp parser", () => {
     it("don't parse malformed timestamp", () => {
         const time = parseTimeStamp("9::10")
         ok(time === null)
+    })
+})
+
+describe("test timestamp generator", () => {
+    it("generate timestamp for 1000 ms", () => {
+        equal(msToTimestamp(1000), "00:01.000")
+    })
+
+    it("generate timestamp for 3600000 ms", () => {
+        equal(msToTimestamp(3600000), "1:00:00.000")
+    
     })
 })

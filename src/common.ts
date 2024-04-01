@@ -117,6 +117,26 @@ export function parseTimeStamp(timestamp: string) {
     return output
 }
 
+export function msToTimestamp(ms: number, secondsPrecision = 3) {
+    let seconds = ms / 1000
+    
+    const output : string[] = []
+    
+    const hours = Math.trunc(seconds / 3600)
+    seconds %= 3600
+    if (hours > 0) {
+        output.push(hours.toFixed(0))
+    }
+
+    const minutes = Math.trunc(seconds / 60)
+    seconds %= 60
+    output.push(minutes.toFixed(0).padStart(2, "0"))
+
+    output.push(seconds.toFixed(secondsPrecision).padStart(secondsPrecision + 3, "0"))
+
+    return output.join(":")
+}
+
 export const FRAMES_PER_SECOND = 60 as const
 
 export const ASSET_DIR = join(__dirname, "..", "assets")

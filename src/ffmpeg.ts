@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process"
-import { ExternalProcess, ProcessFactory } from "./common"
-import { Writable } from "node:stream"
+import { ExternalProcess, ProcessEventEmmiter, ProcessFactory } from "./common"
+import { EventEmitter, Writable } from "node:stream"
 
 export class AudioVideoMergeProcessFactory implements ProcessFactory {
     videoFile : string
@@ -22,6 +22,8 @@ export class AudioVideoMergeProcessFactory implements ProcessFactory {
     }
 
     spawnProcess(): ExternalProcess {
+        const eventEmitter : ProcessEventEmmiter = new EventEmitter()
+
         const args : string[] = [
             "-i", this.videoFile,
             "-i", this.audioFile,    
@@ -48,12 +50,24 @@ export class AudioVideoMergeProcessFactory implements ProcessFactory {
             ffmpegProcess.stderr.pipe(this.stderr)
         }
 
+        ffmpegProcess.stdout.on("data", (msg) => {
+            if (!(msg instanceof Buffer)) { return }
+            
+            const match = msg.toString().match(/out_time_us=(\d+)/) // us (microseconds) and ms (miliseconds) metrics are the same at the moment, taking us and dividing by 1000 to prevent breaking hehavior if/when fixed
+
+            if (match === null) { return }
+
+            const msProgress = Math.trunc(parseInt(match[1]) / 1000)
+
+            eventEmitter.emit("progress", msProgress, 0)
+        })
+        
         return {
             onExit(callback) {
                 ffmpegProcess.on("exit", callback)
             },
-            onProgress() {
-                //TODO
+            onProgress(callback) {
+                eventEmitter.on("progress", callback)
             }
         }
     }
