@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process"
-import { ExternalProcess, ProcessEventEmmiter, ProcessFactory } from "./common"
+import { ExternalProcess, ProcessEventEmmiter, ProcessFactory, parseTimeStamp } from "./common"
 import { EventEmitter, Writable } from "node:stream"
 
 export class AudioVideoMergeProcessFactory implements ProcessFactory {
@@ -11,6 +11,7 @@ export class AudioVideoMergeProcessFactory implements ProcessFactory {
     stderr?: Writable
     startCutoffSeconds?: number
     volume: number
+    progressEndMs?: number
 
     constructor({videoFile, audioFile, outputFile, bitrate, stdout, stderr, startCutoffSeconds, volume} : {videoFile: string, audioFile: string, outputFile: string, bitrate?: number, stdout?: Writable, stderr?: Writable, startCutoffSeconds?: number, volume: number}) {
         this.videoFile = videoFile
@@ -61,14 +62,40 @@ export class AudioVideoMergeProcessFactory implements ProcessFactory {
 
         ffmpegProcess.stdout.on("data", (msg) => {
             if (!(msg instanceof Buffer)) { return }
+
+            const msgStr = msg.toString()
+
+            const timestampMatch = msgStr.match(/out_time_us=(\d+)/) // us (microseconds) and ms (miliseconds) metrics are the same at the moment, taking us and dividing by 1000 to prevent breaking hehavior if/when fixed
+
+            if (timestampMatch === null) { return }
+
+            const msProgress = Math.trunc(parseInt(timestampMatch[1]) / 1000)
+
+            const isEnd = msgStr.includes("progress=end")
+            if (isEnd) {
+                // we've reached the end of the operation, updating progressEndMs accordingly
+                this.progressEndMs = msProgress
+            }
             
-            const match = msg.toString().match(/out_time_us=(\d+)/) // us (microseconds) and ms (miliseconds) metrics are the same at the moment, taking us and dividing by 1000 to prevent breaking hehavior if/when fixed
+            eventEmitter.emit("progress", msProgress, 0, this.progressEndMs)
+        })
 
-            if (match === null) { return }
+        ffmpegProcess.stderr.on("data", (msg) => {
+            if (!(msg instanceof Buffer)) { return }
 
-            const msProgress = Math.trunc(parseInt(match[1]) / 1000)
+            // getting input lengths to approximate current progress
+            const matches = msg.toString().matchAll(/Input #\d+[\S\s]*?Duration:\s+([\d:\.]+)/g)
 
-            eventEmitter.emit("progress", msProgress, 0)
+            for (const match of matches) {
+                const time = parseTimeStamp(match[1])
+                if (time === null) { continue }
+
+                const ms = (time.hours * 3600 + time.minutes * 60 + time.seconds) * 1000
+                if (this.progressEndMs === undefined || this.progressEndMs < ms) {
+                    this.progressEndMs = ms
+                }
+            }
+
         })
         
         return {

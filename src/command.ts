@@ -116,14 +116,14 @@ export async function run(argv : string[] = [], development = false) : Promise<v
                 const normalizedCurrent = frame - startFrame
 
                 if (endFrame == undefined) {
-                    process.stdout.write(`\rrendering frames: ???% (${normalizedCurrent}/???`)
+                    process.stdout.write(`\rrendering frames: ??.?% (${normalizedCurrent}/?    `) // leaving space at the end in case we need to override a big number
                     return
                 }
 
                 const normalizedLast = endFrame - startFrame
                 const percent = normalizedCurrent / normalizedLast * 100
 
-                process.stdout.write(`\rrendering frames: ${percent.toFixed(1)}% (${normalizedCurrent}/${normalizedLast})`)
+                process.stdout.write(`\rrendering frames: ${percent.toFixed(1).padStart(4, "0")}% (${normalizedCurrent}/${normalizedLast})`)
             })
         }
 
@@ -137,9 +137,15 @@ export async function run(argv : string[] = [], development = false) : Promise<v
             console.log("dolphin process finished")
         })
         
-        onFfmpegProgress((progressMs) => {
+        onFfmpegProgress((progressMs, _, endMs) => {
             if (!args.v) {
-                process.stdout.write(`\rrendering output file: ${msToTimestamp(progressMs)}`)
+                if (endMs === undefined) {
+                    process.stdout.write(`\rrendering output file: ??.?% (${msToTimestamp(progressMs)})`)    
+                }
+                else {
+                    const percent = progressMs / endMs * 100
+                    process.stdout.write(`\rrendering output file: ${percent.toFixed(1).padStart(4, "0")}% (${msToTimestamp(progressMs)})`)
+                }
             }
         })
 
