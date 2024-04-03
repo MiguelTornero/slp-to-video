@@ -179,7 +179,7 @@ export class DolphinProcessFactory implements ProcessFactory {
             "-b",
             "--cout",
             "--hide-seekbar"
-        ], {timeout: this.timeout})
+        ], {timeout: this.timeout, cwd: this.workDir})
         
         if (this.stdout) {
             dolphinProcess.stdout.pipe(this.stdout)

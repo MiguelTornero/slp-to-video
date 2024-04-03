@@ -140,3 +140,5 @@ export function msToTimestamp(ms: number, secondsPrecision = 3) {
 export const FRAMES_PER_SECOND = 60 as const
 
 export const ASSET_DIR = join(__dirname, "..", "assets")
+
+export const DEV_DOLPHIN_PATH = join(ASSET_DIR, "playback.appimage") // TODO: change to adapt to different platforms (Win, Mac)

@@ -1,5 +1,5 @@
 import { access, constants, rm } from "fs/promises";
-import { ASSET_DIR, FRAMES_PER_SECOND, createLoadingMessagePrinter, getWorkDir, msToTimestamp, parseTimeStamp, toAbsolutePath } from "./common";
+import { ASSET_DIR, DEV_DOLPHIN_PATH, FRAMES_PER_SECOND, createLoadingMessagePrinter, getWorkDir, msToTimestamp, parseTimeStamp, toAbsolutePath } from "./common";
 import yargs = require("yargs");
 
 import { hideBin } from 'yargs/helpers'
@@ -19,7 +19,7 @@ interface Arguments {
     f?: string,
     t?: string,
     V: number,
-    _: (string|number)[]
+    d: string
 }
 
 async function parseArgv(argv : string[]) : Promise<Arguments> {
@@ -34,6 +34,7 @@ async function parseArgv(argv : string[]) : Promise<Arguments> {
         f: {type: "string", alias: "from", describe: "The frame you would like to start the replay on. Can also be provided as a timestamp with the format MM:SS"},
         t: {type: "string", alias: "to", describe: "The frame you would like to end the replay on. Can also be provided as a timestamp with the format MM:SS"},
         V: {type: "number", alias: "volume", describe: "Volume multipier for the output file", default: DEFAULT_ARGUMENTS.volume},
+        d: {type: "string", alias: "dolphin-path", describe: "Path of the Playback Dolphin executable", default: DEV_DOLPHIN_PATH}
     })
     .strict()
     .parse(argv)
@@ -68,7 +69,7 @@ export async function run(argv : string[] = [], development = false) : Promise<v
     const workDir = getWorkDir(development)
 
     const slp_file = args.slp_file
-    const dolphinPath = join(ASSET_DIR, "playback.appimage") // TODO: change to adapt to different platforms (Win, Mac)
+    const dolphinPath = toAbsolutePath(args.d, cwd())
 
     await access(dolphinPath, constants.R_OK | constants.X_OK)
 
