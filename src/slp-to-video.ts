@@ -12,6 +12,7 @@ type SlpToVideoArguments = {
     internalResolution: ValidInternalResolution,
     outputFilename: string,
     enableWidescreen: boolean,
+    ffmpegPath: string,
     timeout: number,
     stdout?: Writable,
     stderr?: Writable,
@@ -28,6 +29,7 @@ export const DEFAULT_ARGUMENTS : Readonly<SlpToVideoArguments> = {
     workDir: "tmp",
     meleeIso: "SSBM.iso",
     dolphinPath: "dolphin-emu",
+    ffmpegPath: "ffmpeg",
     internalResolution: "720p",
     outputFilename: "output.avi",
     enableWidescreen: false,
@@ -41,7 +43,7 @@ export const DEFAULT_ARGUMENTS : Readonly<SlpToVideoArguments> = {
 }
 
 export function createSlptoVideoProcess(opts: Partial<SlpToVideoArguments> = {}) {
-    const { workDir, inputFile, dolphinPath, meleeIso, timeout, enableWidescreen, outputFilename, stdout, stderr, startFrame, endFrame, startPaddingFrames, volume } = fillUndefinedFields(opts, DEFAULT_ARGUMENTS)
+    const { ffmpegPath, workDir, inputFile, dolphinPath, meleeIso, timeout, enableWidescreen, outputFilename, stdout, stderr, startFrame, endFrame, startPaddingFrames, volume } = fillUndefinedFields(opts, DEFAULT_ARGUMENTS)
 
     let _startFrame : number | undefined = undefined, startCutoffSeconds : number | undefined = undefined
     if (startFrame !== undefined) {
@@ -55,7 +57,7 @@ export function createSlptoVideoProcess(opts: Partial<SlpToVideoArguments> = {})
     const dolphinFactory = new DolphinProcessFactory({dolphinPath, slpInputFile: inputFile, workDir, meleeIso, timeout, enableWidescreen, stdout, stderr, startFrame: _startFrame, endFrame})
     const dolphinProcess = dolphinFactory.spawnProcess()
 
-    const ffmpegFactory = new AudioVideoMergeProcessFactory({videoFile: dolphinFactory.dumpVideoFile, audioFile: dolphinFactory.dumpAudioFile, outputFile: outputFilename, stdout, stderr, startCutoffSeconds, volume})
+    const ffmpegFactory = new AudioVideoMergeProcessFactory({ffmpegPath, videoFile: dolphinFactory.dumpVideoFile, audioFile: dolphinFactory.dumpAudioFile, outputFile: outputFilename, stdout, stderr, startCutoffSeconds, volume})
 
     dolphinProcess.onExit((code) => {
         if (code !== 0) {

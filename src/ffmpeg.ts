@@ -3,6 +3,8 @@ import { ExternalProcess, ProcessEventEmmiter, ProcessFactory, parseTimeStamp } 
 import { EventEmitter, Writable } from "node:stream"
 
 export class AudioVideoMergeProcessFactory implements ProcessFactory {
+
+    ffmpegPath: string
     videoFile : string
     audioFile : string
     outputFile : string
@@ -13,7 +15,7 @@ export class AudioVideoMergeProcessFactory implements ProcessFactory {
     volume: number
     progressEndMs?: number
 
-    constructor({videoFile, audioFile, outputFile, bitrate, stdout, stderr, startCutoffSeconds, volume} : {videoFile: string, audioFile: string, outputFile: string, bitrate?: number, stdout?: Writable, stderr?: Writable, startCutoffSeconds?: number, volume: number}) {
+    constructor({ffmpegPath, videoFile, audioFile, outputFile, bitrate, stdout, stderr, startCutoffSeconds, volume} : {ffmpegPath: string, videoFile: string, audioFile: string, outputFile: string, bitrate?: number, stdout?: Writable, stderr?: Writable, startCutoffSeconds?: number, volume: number}) {
         this.videoFile = videoFile
         this.audioFile = audioFile
         this.outputFile = outputFile
@@ -22,6 +24,7 @@ export class AudioVideoMergeProcessFactory implements ProcessFactory {
         this.stderr = stderr
         this.startCutoffSeconds = startCutoffSeconds
         this.volume = volume
+        this.ffmpegPath = ffmpegPath
     }
 
     spawnProcess(): ExternalProcess {
@@ -51,7 +54,7 @@ export class AudioVideoMergeProcessFactory implements ProcessFactory {
 
         args.push(this.outputFile)
 
-        const ffmpegProcess = spawn("ffmpeg", args)
+        const ffmpegProcess = spawn(this.ffmpegPath, args)
         
         if (this.stdout !== undefined) {
             ffmpegProcess.stdout.pipe(this.stdout)

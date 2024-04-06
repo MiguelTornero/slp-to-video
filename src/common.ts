@@ -2,7 +2,7 @@ import { mkdtempSync, existsSync, mkdirSync, accessSync, constants } from "node:
 import { homedir, tmpdir, userInfo } from "node:os"
 import { isAbsolute, join } from "node:path"
 import { Writable } from "node:stream"
-import { APPDATA, DOLPHIN_PATH } from "./env"
+import { APPDATA, DOLPHIN_PATH, FFMPEG_PATH } from "./env"
 
 const CWD = process.cwd()
 const HOME = homedir()
@@ -282,4 +282,25 @@ export function getDolphinPath(development = false, platform: NodeJS.Platform = 
     }
 
     return null
+}
+
+export function getFfmpegPath(platform = PLATFORM) {
+    // checking env first
+    if (FFMPEG_PATH) {
+        return FFMPEG_PATH
+    }
+    
+    let ffmpeg = "ffmpeg"
+    if (platform === "win32") {
+        ffmpeg += ".exe"
+    }
+
+    // checking if bundled
+    let ffmpegPath = join(ASSET_DIR, ffmpeg)
+    if (checkFileExists(ffmpegPath, true, true)) {
+        return ffmpegPath
+    }
+
+    // fallback to PATH
+    return ffmpeg
 }
