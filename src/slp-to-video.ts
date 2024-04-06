@@ -21,17 +21,17 @@ type SlpToVideoArguments = {
     volume: number
 }
 
-const TEN_MINUTES_TO_MS = 10 * 60 * 1000
+const FIFTEEN_MINUTES_TO_MS = 15 * 60 * 1000
 
 export const DEFAULT_ARGUMENTS : Readonly<SlpToVideoArguments> = {
     inputFile: "input.slp",
     workDir: "tmp",
     meleeIso: "SSBM.iso",
-    dolphinPath: "playback-slippi",
+    dolphinPath: "dolphin-emu",
     internalResolution: "720p",
     outputFilename: "output.avi",
     enableWidescreen: false,
-    timeout: TEN_MINUTES_TO_MS,
+    timeout: FIFTEEN_MINUTES_TO_MS,
     stderr: undefined,
     stdout: undefined,
     startFrame: undefined,

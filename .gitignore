@@ -16,3 +16,7 @@ tsconfig.tsbuildinfo
 *.webm
 
 *.old
+
+# bundled binaries
+/asset/dolphin*
+/asset/ffmpeg*

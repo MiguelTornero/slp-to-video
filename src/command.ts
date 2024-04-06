@@ -1,10 +1,9 @@
 import { access, constants, rm } from "fs/promises";
-import { ASSET_DIR, DEV_DOLPHIN_PATH, FRAMES_PER_SECOND, createLoadingMessagePrinter, getWorkDir, msToTimestamp, parseTimeStamp, toAbsolutePath } from "./common";
+import { FRAMES_PER_SECOND, createLoadingMessagePrinter, getDolphinPath, getWorkDir, msToTimestamp, parseTimeStamp, toAbsolutePath } from "./common";
 import yargs = require("yargs");
 
 import { hideBin } from 'yargs/helpers'
 import { DEFAULT_ARGUMENTS, createSlptoVideoProcess } from "./slp-to-video";
-import { join } from "path";
 import { cwd } from "process";
 
 interface Arguments {
@@ -19,7 +18,7 @@ interface Arguments {
     f?: string,
     t?: string,
     V: number,
-    d: string
+    d?: string
 }
 
 async function parseArgv(argv : string[]) : Promise<Arguments> {
@@ -27,14 +26,14 @@ async function parseArgv(argv : string[]) : Promise<Arguments> {
         h: {type: "boolean", alias: "help"},
         slp_file: {type: "string", demandOption: true, hidden: true}, // same as first positional arg, needed for proper typescript type inference, hidden
         i: {type: "string", alias: "iso", describe: "Path to the Melee ISO", default: DEFAULT_ARGUMENTS.meleeIso},
-        m: {type: "number", alias: "timeout", describe: "Maximum amount of miliseconds the Dolphin process is allowed to run", default: DEFAULT_ARGUMENTS.timeout},
+        m: {type: "number", alias: "timeout", describe: "Maximum amount of miliseconds the process is allowed to run", default: DEFAULT_ARGUMENTS.timeout},
         o: {type: "string", alias: "output", describe: "Name of the output file", default: DEFAULT_ARGUMENTS.outputFilename},
-        v: {type: "boolean", alias: "verbose", describe: "Enable extra outpug"},
+        v: {type: "boolean", alias: "verbose", describe: "Enable extra output"},
         w: {type: "boolean", alias: "widescreen", describe: "Enable widescreen resolution (16:9)"},
         f: {type: "string", alias: "from", describe: "The frame you would like to start the replay on. Can also be provided as a timestamp with the format MM:SS"},
         t: {type: "string", alias: "to", describe: "The frame you would like to end the replay on. Can also be provided as a timestamp with the format MM:SS"},
         V: {type: "number", alias: "volume", describe: "Volume multipier for the output file", default: DEFAULT_ARGUMENTS.volume},
-        d: {type: "string", alias: "dolphin-path", describe: "Path of the Playback Dolphin executable", default: DEV_DOLPHIN_PATH}
+        d: {type: "string", alias: "dolphin-path", describe: "Path of the Playback Dolphin executable"}
     })
     .strict()
     .parse(argv)
@@ -69,9 +68,17 @@ export async function run(argv : string[] = [], development = false) : Promise<v
     const workDir = getWorkDir(development)
 
     const slp_file = args.slp_file
-    const dolphinPath = toAbsolutePath(args.d, cwd())
 
-    await access(dolphinPath, constants.R_OK | constants.X_OK)
+    let dolphinPath
+    if (args.d !== undefined) {
+        dolphinPath = args.d
+    }
+    else {
+        dolphinPath = getDolphinPath(development)
+        if (dolphinPath === null) {
+            dolphinPath = undefined
+        }
+    }
 
     const inputFile = toAbsolutePath(slp_file, cwd())
     const meleeIso = toAbsolutePath(args.i, cwd())
