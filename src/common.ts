@@ -3,6 +3,7 @@ import { homedir, tmpdir, userInfo } from "node:os"
 import { isAbsolute, join } from "node:path"
 import { Writable } from "node:stream"
 import { APPDATA, DOLPHIN_PATH, FFMPEG_PATH } from "./env"
+import which = require("which")
 
 const CWD = process.cwd()
 const HOME = homedir()
@@ -281,7 +282,8 @@ export function getDolphinPath(development = false, platform: NodeJS.Platform = 
         return dolphinPath
     }
 
-    return undefined
+    // checking PATH as last resort
+    return which.sync("slippi-playback", {nothrow: true})
 }
 
 export function getFfmpegPath(platform = PLATFORM) {
@@ -301,5 +303,6 @@ export function getFfmpegPath(platform = PLATFORM) {
         return ffmpegPath
     }
 
-    return undefined
+    // checking PATH
+    return which.sync(ffmpeg, {nothrow: true})
 }

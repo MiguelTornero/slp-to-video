@@ -1,4 +1,4 @@
-import { ProcessEventEmmiter, fillUndefinedFields, ProgressCallback, FRAMES_PER_SECOND } from "./common"
+import { ProcessEventEmmiter, fillUndefinedFields, ProgressCallback, FRAMES_PER_SECOND, getDolphinPath } from "./common"
 import { EventEmitter, Writable } from "stream"
 import { DolphinProcessFactory, ValidInternalResolution } from "./dolphin"
 import { AudioVideoMergeProcessFactory } from "./ffmpeg"
@@ -28,7 +28,7 @@ export const DEFAULT_ARGUMENTS : Readonly<SlpToVideoArguments> = {
     inputFile: "input.slp",
     workDir: "tmp",
     meleeIso: "SSBM.iso",
-    dolphinPath: "dolphin-emu",
+    dolphinPath: "slippi-playback",
     ffmpegPath: "ffmpeg",
     internalResolution: "720p",
     outputFilename: "output.avi",
@@ -43,6 +43,19 @@ export const DEFAULT_ARGUMENTS : Readonly<SlpToVideoArguments> = {
 }
 
 export function createSlptoVideoProcess(opts: Partial<SlpToVideoArguments> = {}) {
+    if (opts.dolphinPath === undefined) {
+        const dolphinPath = getDolphinPath(false)
+        if (dolphinPath !== null) {
+            opts.dolphinPath = dolphinPath
+        }
+    }
+    if (opts.ffmpegPath === undefined) {
+        const ffmpegPath = getDolphinPath(false)
+        if (ffmpegPath !== null) {
+            opts.ffmpegPath = ffmpegPath
+        }
+    }
+
     const { ffmpegPath, workDir, inputFile, dolphinPath, meleeIso, timeout, enableWidescreen, outputFilename, stdout, stderr, startFrame, endFrame, startPaddingFrames, volume } = fillUndefinedFields(opts, DEFAULT_ARGUMENTS)
 
     let _startFrame : number | undefined = undefined, startCutoffSeconds : number | undefined = undefined
