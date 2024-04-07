@@ -1,4 +1,4 @@
-import { ProcessEventEmmiter, fillUndefinedFields, ProgressCallback, FRAMES_PER_SECOND, getDolphinPath } from "./common"
+import { ProcessEventEmmiter, fillUndefinedFields, ProgressCallback, FRAMES_PER_SECOND, getDolphinPath, getFfmpegPath } from "./common"
 import { EventEmitter, Writable } from "stream"
 import { DolphinProcessFactory, ValidInternalResolution } from "./dolphin"
 import { AudioVideoMergeProcessFactory } from "./ffmpeg"
@@ -45,15 +45,17 @@ export const DEFAULT_ARGUMENTS : Readonly<SlpToVideoArguments> = {
 export function createSlptoVideoProcess(opts: Partial<SlpToVideoArguments> = {}) {
     if (opts.dolphinPath === undefined) {
         const dolphinPath = getDolphinPath(false)
-        if (dolphinPath !== null) {
-            opts.dolphinPath = dolphinPath
+        if (dolphinPath === null) {
+            throw new Error("no valid playback dolphin path was found")
         }
+        opts.dolphinPath = dolphinPath
     }
     if (opts.ffmpegPath === undefined) {
-        const ffmpegPath = getDolphinPath(false)
-        if (ffmpegPath !== null) {
-            opts.ffmpegPath = ffmpegPath
+        const ffmpegPath = getFfmpegPath()
+        if (ffmpegPath === null) {
+            throw new Error("no valid ffmpeg path was found")
         }
+        opts.ffmpegPath = ffmpegPath
     }
 
     const { ffmpegPath, workDir, inputFile, dolphinPath, meleeIso, timeout, enableWidescreen, outputFilename, stdout, stderr, startFrame, endFrame, startPaddingFrames, volume } = fillUndefinedFields(opts, DEFAULT_ARGUMENTS)

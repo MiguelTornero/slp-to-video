@@ -66,58 +66,60 @@ function parseFrameInput(input: string, startFrame = -123, framerate = FRAMES_PE
 export async function run(argv : string[] = [], development = false) : Promise<void> {
     argv = hideBin(argv)
     const args : Arguments = await parseArgv(argv) // can exit the program
-
-    const workDir = getWorkDir(development)
-
-    const slp_file = args.slp_file
-
-    let dolphinPath
-    if (args.d !== undefined) {
-        dolphinPath =  toAbsolutePath(args.d)
-    }
-    else {
-        dolphinPath = getDolphinPath(development)
-        if (dolphinPath === null) {
-            dolphinPath = undefined
-        }
-    }
-
-    let ffmpegPath
-    if (args.p !== undefined) {
-        ffmpegPath = toAbsolutePath(args.p)
-    }
-    else {
-        ffmpegPath = getFfmpegPath()
-        if (ffmpegPath === null) {
-            ffmpegPath = undefined
-        }
-    }
-
-
-    const inputFile = toAbsolutePath(slp_file)
-    const meleeIso = toAbsolutePath(args.i)
-    const outputPath = toAbsolutePath(args.o)
-
-    const startFrame = args.f !== undefined ? parseFrameInput(args.f) : undefined
-    const endFrame = args.t !== undefined ? parseFrameInput(args.t) : undefined
-
-    const dolphinLoadingPrinter = createLoadingMessagePrinter("opening playback dolphin", process.stdout, 500)
-    let dolphinRunning = false
-
-    let stdout = undefined, stderr = undefined
-    if (args.v) {
-        console.log("workdir:", workDir)
-        console.log("slp file:", inputFile)
-        console.log("dolphin:", dolphinPath)
-        console.log("iso:", meleeIso)
-        console.log("start frame:", startFrame)
-        console.log("end frame:", endFrame)
-        console.log("ffmpeg:", ffmpegPath)
-        stdout = process.stdout
-        stderr = process.stderr
-    }
+    let workDir : string | null = null
 
     try {
+
+        workDir = getWorkDir(development)
+
+        const slp_file = args.slp_file
+
+        let dolphinPath
+        if (args.d !== undefined) {
+            dolphinPath =  toAbsolutePath(args.d)
+        }
+        else {
+            dolphinPath = getDolphinPath(development)
+            if (dolphinPath === null) {
+                dolphinPath = undefined
+            }
+        }
+
+        let ffmpegPath
+        if (args.p !== undefined) {
+            ffmpegPath = toAbsolutePath(args.p)
+        }
+        else {
+            ffmpegPath = getFfmpegPath()
+            if (ffmpegPath === null) {
+                ffmpegPath = undefined
+            }
+        }
+
+
+        const inputFile = toAbsolutePath(slp_file)
+        const meleeIso = toAbsolutePath(args.i)
+        const outputPath = toAbsolutePath(args.o)
+
+        const startFrame = args.f !== undefined ? parseFrameInput(args.f) : undefined
+        const endFrame = args.t !== undefined ? parseFrameInput(args.t) : undefined
+
+        const dolphinLoadingPrinter = createLoadingMessagePrinter("opening playback dolphin", process.stdout, 500)
+        let dolphinRunning = false
+
+        let stdout = undefined, stderr = undefined
+        if (args.v) {
+            console.log("workdir:", workDir)
+            console.log("slp file:", inputFile)
+            console.log("dolphin:", dolphinPath)
+            console.log("iso:", meleeIso)
+            console.log("start frame:", startFrame)
+            console.log("end frame:", endFrame)
+            console.log("ffmpeg:", ffmpegPath)
+            stdout = process.stdout
+            stderr = process.stderr
+        }
+
         if (startFrame === null) {
             //there was an error parsing the frame input
             throw new Error("invalid start frame input")
@@ -196,7 +198,7 @@ export async function run(argv : string[] = [], development = false) : Promise<v
     }
     finally {
         console.log("\ncleaning up...")
-        if (!development) {
+        if (!development && workDir) {
             await rm(workDir, {recursive: true, force: true})
        }
        // add orphaned child process handling here, if necessary
