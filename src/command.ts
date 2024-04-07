@@ -77,9 +77,6 @@ export async function run(argv : string[] = [], development = false) : Promise<v
     }
     else {
         dolphinPath = getDolphinPath(development)
-        if (dolphinPath === null) {
-            dolphinPath = undefined
-        }
     }
 
     let ffmpegPath

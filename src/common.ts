@@ -233,9 +233,9 @@ export function getLocalSlippiBinary(platform: NodeJS.Platform) {
     }
 }
 
-const WIN_BUNDLED_BIN = join(ASSET_DIR, "dolphin.exe")
-const MAC_BUNDLED_BIN = join(ASSET_DIR, "dolphin.app")
-const LINUX_BUNDLED_BIN = join(ASSET_DIR, "dolphin.appimage")
+const WIN_BUNDLED_BIN = join(ASSET_DIR, DEFAULT_WIN_BIN_NAME)
+const MAC_BUNDLED_BIN = join(ASSET_DIR, DEFAULT_MAC_BIN_NAME)
+const LINUX_BUNDLED_BIN = join(ASSET_DIR, DEFAULT_APPIMAGE_NAME)
 export function getBundledDolphinBinary(platform: NodeJS.Platform) {
     switch (platform) {
         case "win32":
@@ -281,7 +281,7 @@ export function getDolphinPath(development = false, platform: NodeJS.Platform = 
         return dolphinPath
     }
 
-    return null
+    return undefined
 }
 
 export function getFfmpegPath(platform = PLATFORM) {
@@ -301,6 +301,5 @@ export function getFfmpegPath(platform = PLATFORM) {
         return ffmpegPath
     }
 
-    // fallback to PATH
-    return ffmpeg
+    return undefined
 }

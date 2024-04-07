@@ -18,5 +18,7 @@ tsconfig.tsbuildinfo
 *.old
 
 # bundled binaries
-/assets/dolphin*
 /assets/ffmpeg*
+/assets/*.exe
+/assets/*.app
+/assets/*.[Aa]pp[I]mage
