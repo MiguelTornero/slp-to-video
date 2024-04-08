@@ -4,7 +4,6 @@ import yargs = require("yargs");
 
 import { hideBin } from 'yargs/helpers'
 import { DEFAULT_ARGUMENTS, createSlptoVideoProcess } from "./slp-to-video";
-import { cwd } from "process";
 
 interface Arguments {
     [x: string]: unknown,
