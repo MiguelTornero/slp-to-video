@@ -9,32 +9,32 @@ interface Arguments {
     [x: string]: unknown,
     h?: boolean,
     slp_file: string,
-    i: string,
-    m: number,
-    o: string,
-    v?: boolean,
-    w?: boolean,
-    f?: string,
-    t?: string,
-    V: number,
-    d?: string,
-    p?: string,
+    iso: string,
+    timeout: number,
+    output: string,
+    verbose?: boolean,
+    widescreen?: boolean,
+    from?: string,
+    to?: string,
+    volume: number,
+    "dolphin-path"?: string,
+    "ffmpeg-path"?: string,
 }
 
 async function parseArgv(argv : string[]) : Promise<Arguments> {
     return await yargs().command("$0 <slp_file>", "Converts SLP files to video files").options({
         h: {type: "boolean", alias: "help"},
         slp_file: {type: "string", demandOption: true, hidden: true}, // same as first positional arg, needed for proper typescript type inference, hidden
-        i: {type: "string", alias: "iso", describe: "Path to the Melee ISO", default: DEFAULT_ARGUMENTS.meleeIso},
-        m: {type: "number", alias: "timeout", describe: "Maximum amount of miliseconds the process is allowed to run", default: DEFAULT_ARGUMENTS.timeout},
-        o: {type: "string", alias: "output", describe: "Name of the output file", default: DEFAULT_ARGUMENTS.outputFilename},
-        v: {type: "boolean", alias: "verbose", describe: "Enable extra output"},
-        w: {type: "boolean", alias: "widescreen", describe: "Enable widescreen resolution (16:9)"},
-        f: {type: "string", alias: "from", describe: "The frame you would like to start the replay on. Can also be provided as a timestamp with the format MM:SS"},
-        t: {type: "string", alias: "to", describe: "The frame you would like to end the replay on. Can also be provided as a timestamp with the format MM:SS"},
-        V: {type: "number", alias: "volume", describe: "Volume multipier for the output file", default: DEFAULT_ARGUMENTS.volume},
-        d: {type: "string", alias: "dolphin-path", describe: "Path of the Playback Dolphin binary"},
-        p: {type: "string", alias: "ffmpeg-path", describe: "Path to the ffmpeg binary"}
+        iso: {type: "string", alias: "i", describe: "Path to the Melee ISO", default: DEFAULT_ARGUMENTS.meleeIso},
+        timeout: {type: "number", alias: "m", describe: "Maximum amount of miliseconds the process is allowed to run", default: DEFAULT_ARGUMENTS.timeout},
+        output: {type: "string", alias: "o", describe: "Name of the output file", default: DEFAULT_ARGUMENTS.outputFilename},
+        verbose: {type: "boolean", alias: "v", describe: "Enable extra output"},
+        widescreen: {type: "boolean", alias: "w", describe: "Enable widescreen resolution (16:9)"},
+        from: {type: "string", alias: "f", describe: "The frame you would like to start the replay on. Can also be provided as a timestamp with the format MM:SS"},
+        to: {type: "string", alias: "t", describe: "The frame you would like to end the replay on. Can also be provided as a timestamp with the format MM:SS"},
+        volume: {type: "number", alias: "V", describe: "Volume multipier for the output file", default: DEFAULT_ARGUMENTS.volume},
+        "dolphin-path": {type: "string", alias: "d", describe: "Path of the Playback Dolphin binary"},
+        "ffmpeg-path": {type: "string", alias: "p", describe: "Path to the ffmpeg binary"}
     })
     .strict()
     .parse(argv)
@@ -74,8 +74,8 @@ export async function run(argv : string[] = [], development = false) : Promise<v
         const slp_file = args.slp_file
 
         let dolphinPath
-        if (args.d !== undefined) {
-            dolphinPath =  toAbsolutePath(args.d)
+        if (args["dolphin-path"] !== undefined) {
+            dolphinPath =  toAbsolutePath(args["dolphin-path"])
         }
         else {
             dolphinPath = getDolphinPath(development)
@@ -85,8 +85,8 @@ export async function run(argv : string[] = [], development = false) : Promise<v
         }
 
         let ffmpegPath
-        if (args.p !== undefined) {
-            ffmpegPath = toAbsolutePath(args.p)
+        if (args["ffmpeg-path"] !== undefined) {
+            ffmpegPath = toAbsolutePath(args["ffmpeg-path"])
         }
         else {
             ffmpegPath = getFfmpegPath()
@@ -97,20 +97,20 @@ export async function run(argv : string[] = [], development = false) : Promise<v
 
 
         const inputFile = toAbsolutePath(slp_file)
-        const meleeIso = toAbsolutePath(args.i)
-        const outputPath = toAbsolutePath(args.o)
+        const meleeIso = toAbsolutePath(args.iso)
+        const outputPath = toAbsolutePath(args.output)
 
         await access(inputFile, constants.R_OK)
         await access(meleeIso, constants.R_OK)
 
-        const startFrame = args.f !== undefined ? parseFrameInput(args.f) : undefined
-        const endFrame = args.t !== undefined ? parseFrameInput(args.t) : undefined
+        const startFrame = args.from !== undefined ? parseFrameInput(args.from) : undefined
+        const endFrame = args.to !== undefined ? parseFrameInput(args.to) : undefined
 
         const dolphinLoadingPrinter = createLoadingMessagePrinter("opening playback dolphin", process.stdout, 500)
         let dolphinRunning = false
 
         let stdout = undefined, stderr = undefined
-        if (args.v) {
+        if (args.verbose) {
             console.log("workdir:", workDir)
             console.log("slp file:", inputFile)
             console.log("dolphin:", dolphinPath)
@@ -131,9 +131,9 @@ export async function run(argv : string[] = [], development = false) : Promise<v
             throw new Error("invalid end frame input")
         }
 
-        const {onDolphinProgress, onDolphinExit, onDone, onFfmpegDone, onFfmpegProgress} = createSlptoVideoProcess({dolphinPath: dolphinPath, ffmpegPath: ffmpegPath ,inputFile: inputFile, workDir: workDir, meleeIso: meleeIso, timeout: args.m, outputFilename: outputPath, enableWidescreen: args.w, stdout, stderr, startFrame, endFrame, volume: args.V})
+        const {onDolphinProgress, onDolphinExit, onDone, onFfmpegDone, onFfmpegProgress} = createSlptoVideoProcess({dolphinPath: dolphinPath, ffmpegPath: ffmpegPath ,inputFile: inputFile, workDir: workDir, meleeIso: meleeIso, timeout: args.timeout, outputFilename: outputPath, enableWidescreen: args.widescreen, stdout, stderr, startFrame, endFrame, volume: args.volume})
         
-        if (!args.v) {
+        if (!args.verbose) {
             dolphinLoadingPrinter.start()
             onDolphinProgress((frame, startFrame, endFrame) => {
                 if (!dolphinRunning) {
@@ -168,7 +168,7 @@ export async function run(argv : string[] = [], development = false) : Promise<v
         })
         
         onFfmpegProgress((progressMs, _, endMs) => {
-            if (!args.v) {
+            if (!args.verbose) {
                 if (endMs === undefined) {
                     process.stdout.write(`\rrendering output file: ??.?% (${msToTimestamp(progressMs)})`)    
                 }
@@ -180,7 +180,7 @@ export async function run(argv : string[] = [], development = false) : Promise<v
         })
 
         onFfmpegDone((code) => {
-            if (!args.v) {
+            if (!args.verbose) {
                 process.stdout.write("\n")
             }
             if (code !== 0) {
@@ -194,7 +194,7 @@ export async function run(argv : string[] = [], development = false) : Promise<v
         await new Promise<void>((res, rej) => {
             const timer = setTimeout(() => {
                 rej(new Error("reached timeout timer"))
-            }, args.m)
+            }, args.timeout)
             onDone(() => {
                 clearTimeout(timer)
                 res()
