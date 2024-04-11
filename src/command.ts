@@ -1,4 +1,4 @@
-import { rm } from "fs/promises";
+import { access, constants, rm } from "fs/promises";
 import { FRAMES_PER_SECOND, createLoadingMessagePrinter, getDolphinPath, getFfmpegPath, getWorkDir, msToTimestamp, parseTimeStamp, toAbsolutePath } from "./common";
 import yargs = require("yargs");
 
@@ -99,6 +99,9 @@ export async function run(argv : string[] = [], development = false) : Promise<v
         const inputFile = toAbsolutePath(slp_file)
         const meleeIso = toAbsolutePath(args.i)
         const outputPath = toAbsolutePath(args.o)
+
+        await access(inputFile, constants.R_OK)
+        await access(meleeIso, constants.R_OK)
 
         const startFrame = args.f !== undefined ? parseFrameInput(args.f) : undefined
         const endFrame = args.t !== undefined ? parseFrameInput(args.t) : undefined
