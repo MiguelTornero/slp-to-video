@@ -152,7 +152,10 @@ export async function run(argv : string[] = [], development = false) : Promise<v
         }
 
         onDolphinExit((exitCode) => {
-            process.stdout.write("\n")
+            if (!dolphinRunning) {
+                dolphinRunning = true
+                dolphinLoadingPrinter.stop()
+            }
             if (exitCode !== 0) {
                 console.error("dolphin exited abnormally. This may be due to an invalid SLP or ISO file")
                 return

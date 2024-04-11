@@ -85,7 +85,7 @@ export function createLoadingMessagePrinter(message: string, outputStream: Writa
             }
             clearInterval(timer)
             timer = null
-            outputStream.write("\n")
+            outputStream.write(message + loopingChar.repeat(loopingCharMax) + "\n")
             return true
         }
 
