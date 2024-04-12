@@ -13,7 +13,7 @@ type SlpToVideoArguments = {
     outputFilename: string,
     enableWidescreen: boolean,
     ffmpegPath: string,
-    timeout: number,
+    timeout?: number,
     stdout?: Writable,
     stderr?: Writable,
     startFrame?: number,
@@ -33,7 +33,7 @@ export const DEFAULT_ARGUMENTS : Readonly<SlpToVideoArguments> = {
     internalResolution: "720p",
     outputFilename: "output.avi",
     enableWidescreen: false,
-    timeout: FIFTEEN_MINUTES_TO_MS,
+    timeout: undefined,
     stderr: undefined,
     stdout: undefined,
     startFrame: undefined,
@@ -87,6 +87,12 @@ export function createSlptoVideoProcess(opts: Partial<SlpToVideoArguments> = {})
             overallEventEmitter.emit("done", code)
         }) 
     })
+
+    if (timeout) {
+        setTimeout(() => {
+            // handle timeout here
+        }, timeout)
+    }
 
     return {
         onDolphinProgress(callback: ProgressCallback) {

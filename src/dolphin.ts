@@ -80,7 +80,7 @@ export class DolphinProcessFactory implements ProcessFactory {
     userDir: string
     slpInputFile: string
     meleeIso: string
-    timeout: number
+    timeout?: number
     inputJsonPath: string
     stdout?: Writable
     stderr?: Writable
@@ -95,7 +95,7 @@ export class DolphinProcessFactory implements ProcessFactory {
     progressStart: number
     progressEnd?: number
 
-    constructor({dolphinPath, slpInputFile, workDir, meleeIso, timeout, enableWidescreen, stdout, stderr, startFrame, endFrame}: {dolphinPath: string, slpInputFile: string, workDir: string, meleeIso: string, timeout: number, enableWidescreen: boolean, stdout?: Writable, stderr?: Writable, startFrame?: number, endFrame?: number}) {
+    constructor({dolphinPath, slpInputFile, workDir, meleeIso, timeout, enableWidescreen, stdout, stderr, startFrame, endFrame}: {dolphinPath: string, slpInputFile: string, workDir: string, meleeIso: string, timeout?: number, enableWidescreen: boolean, stdout?: Writable, stderr?: Writable, startFrame?: number, endFrame?: number}) {
         this.dolphinPath = dolphinPath
         this.enableWidescreen = enableWidescreen
         this.workDir = workDir

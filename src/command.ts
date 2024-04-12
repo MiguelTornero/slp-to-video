@@ -10,7 +10,7 @@ interface Arguments {
     h?: boolean,
     slp_file: string,
     iso: string,
-    timeout: number,
+    timeout?: number,
     output: string,
     verbose?: boolean,
     widescreen?: boolean,
@@ -26,7 +26,7 @@ async function parseArgv(argv : string[]) : Promise<Arguments> {
         h: {type: "boolean", alias: "help"},
         slp_file: {type: "string", demandOption: true, hidden: true}, // same as first positional arg, needed for proper typescript type inference, hidden
         iso: {type: "string", alias: "i", describe: "Path to the Melee ISO", default: DEFAULT_ARGUMENTS.meleeIso},
-        timeout: {type: "number", alias: "m", describe: "Maximum amount of miliseconds the process is allowed to run", default: DEFAULT_ARGUMENTS.timeout},
+        timeout: {type: "number", alias: "m", describe: "Maximum amount of miliseconds the process is allowed to run"},
         output: {type: "string", alias: "o", describe: "Name of the output file", default: DEFAULT_ARGUMENTS.outputFilename},
         verbose: {type: "boolean", alias: "v", describe: "Enable extra output"},
         widescreen: {type: "boolean", alias: "w", describe: "Enable widescreen resolution (16:9)"},
