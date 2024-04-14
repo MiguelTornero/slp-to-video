@@ -212,6 +212,9 @@ export class DolphinProcessFactory implements ProcessFactory {
             },
             onProgress(callback) {
                 eventEmitter.on("progress", callback)
+            },
+            kill(signal) {
+                dolphinProcess.kill(signal)
             }
         }
     }

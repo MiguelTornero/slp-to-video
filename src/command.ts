@@ -19,6 +19,8 @@ interface Arguments {
     volume: number,
     "dolphin-path"?: string,
     "ffmpeg-path"?: string,
+    "dolphin-timeout"?: number,
+    "ffmpeg-timeout"?: number
 }
 
 async function parseArgv(argv : string[]) : Promise<Arguments> {
@@ -26,7 +28,7 @@ async function parseArgv(argv : string[]) : Promise<Arguments> {
         h: {type: "boolean", alias: "help"},
         slp_file: {type: "string", demandOption: true, hidden: true}, // same as first positional arg, needed for proper typescript type inference, hidden
         iso: {type: "string", alias: "i", describe: "Path to the Melee ISO", default: DEFAULT_ARGUMENTS.meleeIso},
-        timeout: {type: "number", alias: "m", describe: "Maximum amount of miliseconds the process is allowed to run"},
+        timeout: {type: "number", alias: "m", describe: "Maximum amount of miliseconds the overall process is allowed to run"},
         output: {type: "string", alias: "o", describe: "Name of the output file", default: DEFAULT_ARGUMENTS.outputFilename},
         verbose: {type: "boolean", alias: "v", describe: "Enable extra output"},
         widescreen: {type: "boolean", alias: "w", describe: "Enable widescreen resolution (16:9)"},
@@ -34,10 +36,25 @@ async function parseArgv(argv : string[]) : Promise<Arguments> {
         to: {type: "string", alias: "t", describe: "The frame you would like to end the replay on. Can also be provided as a timestamp with the format MM:SS"},
         volume: {type: "number", alias: "V", describe: "Volume multipier for the output file", default: DEFAULT_ARGUMENTS.volume},
         "dolphin-path": {type: "string", alias: "d", describe: "Path of the Playback Dolphin binary"},
-        "ffmpeg-path": {type: "string", alias: "p", describe: "Path to the ffmpeg binary"}
+        "ffmpeg-path": {type: "string", alias: "p", describe: "Path to the ffmpeg binary"},
+        "dolphin-timeout": {type: "number", describe: "Maximum amount of miliseconds the Dolphin process is allowed to run"},
+        "ffmpeg-timeout": {type: "number", describe: "Maximum amount of miliseconds the ffmpeg process is allowed to run"}
     })
     .strict()
     .parse(argv)
+}
+
+async function cleanup(development: boolean, workDir: string | null, processKill: (() => void) | null) {
+    console.log("\ncleaning up...")
+
+    // handling possible orphaned processes
+    if (processKill) {
+        processKill()
+    }
+
+    if (!development && workDir) {
+        await rm(workDir, {recursive: true, force: true})
+    }
 }
 
 /**
@@ -66,6 +83,7 @@ export async function run(argv : string[] = [], development = false) : Promise<v
     argv = hideBin(argv)
     const args : Arguments = await parseArgv(argv) // can exit the program
     let workDir : string | null = null
+    let processKill : (() => void) | null = null
 
     try {
 
@@ -131,7 +149,8 @@ export async function run(argv : string[] = [], development = false) : Promise<v
             throw new Error("invalid end frame input")
         }
 
-        const {onDolphinProgress, onDolphinExit, onDone, onFfmpegDone, onFfmpegProgress} = createSlptoVideoProcess({dolphinPath: dolphinPath, ffmpegPath: ffmpegPath ,inputFile: inputFile, workDir: workDir, meleeIso: meleeIso, timeout: args.timeout, outputFilename: outputPath, enableWidescreen: args.widescreen, stdout, stderr, startFrame, endFrame, volume: args.volume})
+        const {onDolphinProgress, onDolphinExit, onDone, onFfmpegDone, onFfmpegProgress, kill} = createSlptoVideoProcess({dolphinPath: dolphinPath, ffmpegPath: ffmpegPath ,inputFile: inputFile, workDir: workDir, meleeIso: meleeIso, timeout: args.timeout, outputFilename: outputPath, enableWidescreen: args.widescreen, stdout, stderr, startFrame, endFrame, volume: args.volume, ffmpegTimeout: args["ffmpeg-timeout"], dolphinTimeout: args["dolphin-timeout"]})
+        processKill = kill
         
         if (!args.verbose) {
             dolphinLoadingPrinter.start()
@@ -155,6 +174,9 @@ export async function run(argv : string[] = [], development = false) : Promise<v
         }
 
         onDolphinExit((exitCode) => {
+            if (!args.verbose) {
+                process.stdout.write("\n")
+            }
             if (!dolphinRunning) {
                 dolphinRunning = true
                 dolphinLoadingPrinter.stop()
@@ -191,21 +213,11 @@ export async function run(argv : string[] = [], development = false) : Promise<v
             }
         })
 
-        await new Promise<void>((res, rej) => {
-            const timer = setTimeout(() => {
-                rej(new Error("reached timeout timer"))
-            }, args.timeout)
-            onDone(() => {
-                clearTimeout(timer)
-                res()
-            })
+        await new Promise<any>((res) => {
+            onDone(res)
         })
     }
     finally {
-        console.log("\ncleaning up...")
-        if (!development && workDir) {
-            await rm(workDir, {recursive: true, force: true})
-       }
-       // add orphaned child process handling here, if necessary
+        cleanup(development, workDir, processKill)
     }
 }

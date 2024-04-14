@@ -13,9 +13,10 @@ export class AudioVideoMergeProcessFactory implements ProcessFactory {
     stderr?: Writable
     startCutoffSeconds?: number
     volume: number
+    timeout?: number
     progressEndMs?: number
 
-    constructor({ffmpegPath, videoFile, audioFile, outputFile, bitrate, stdout, stderr, startCutoffSeconds, volume} : {ffmpegPath: string, videoFile: string, audioFile: string, outputFile: string, bitrate?: number, stdout?: Writable, stderr?: Writable, startCutoffSeconds?: number, volume: number}) {
+    constructor({ffmpegPath, videoFile, audioFile, outputFile, bitrate, stdout, stderr, startCutoffSeconds, volume, timeout} : {ffmpegPath: string, videoFile: string, audioFile: string, outputFile: string, bitrate?: number, stdout?: Writable, stderr?: Writable, startCutoffSeconds?: number, volume: number, timeout?: number}) {
         this.videoFile = videoFile
         this.audioFile = audioFile
         this.outputFile = outputFile
@@ -25,6 +26,7 @@ export class AudioVideoMergeProcessFactory implements ProcessFactory {
         this.startCutoffSeconds = startCutoffSeconds
         this.volume = volume
         this.ffmpegPath = ffmpegPath
+        this.timeout = timeout
     }
 
     spawnProcess(): ExternalProcess {
@@ -54,7 +56,7 @@ export class AudioVideoMergeProcessFactory implements ProcessFactory {
 
         args.push(this.outputFile)
 
-        const ffmpegProcess = spawn(this.ffmpegPath, args)
+        const ffmpegProcess = spawn(this.ffmpegPath, args, {timeout: this.timeout})
         
         if (this.stdout !== undefined) {
             ffmpegProcess.stdout.pipe(this.stdout)
@@ -107,7 +109,10 @@ export class AudioVideoMergeProcessFactory implements ProcessFactory {
             },
             onProgress(callback) {
                 eventEmitter.on("progress", callback)
-            }
+            },
+            kill(signal) {
+                ffmpegProcess.kill(signal)
+            },
         }
     }
 }

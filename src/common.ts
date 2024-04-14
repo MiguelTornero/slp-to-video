@@ -14,6 +14,7 @@ export type ProgressCallback = (progress: number, start: number, end?: number) =
 export interface ExternalProcess {
     onExit(callback: (code: number|null) => void): void
     onProgress(callback: ProgressCallback): void
+    kill(signal?: NodeJS.Signals | number): void
 }
 
 export interface ProcessEventEmmiter {
