@@ -3,7 +3,6 @@ import { EventEmitter, Writable } from "stream"
 import { DolphinProcessFactory, ValidInternalResolution } from "./dolphin"
 import { AudioVideoMergeProcessFactory } from "./ffmpeg"
 import { Frames } from "@slippi/slippi-js"
-import { ChildProcessWithoutNullStreams } from "child_process"
 
 type SlpToVideoArguments = {
     inputFile: string,
@@ -47,6 +46,8 @@ export const DEFAULT_ARGUMENTS : Readonly<SlpToVideoArguments> = {
     bitrate: 25000
 }
 
+export const isValidInternalResolution = DolphinProcessFactory.isValidInternalResolution
+
 export function createSlptoVideoProcess(opts: Partial<SlpToVideoArguments> = {}) {
     if (opts.dolphinPath === undefined) {
         const dolphinPath = getDolphinPath(false)
@@ -63,7 +64,7 @@ export function createSlptoVideoProcess(opts: Partial<SlpToVideoArguments> = {})
         opts.ffmpegPath = ffmpegPath
     }
 
-    const { ffmpegPath, workDir, inputFile, dolphinPath, meleeIso, timeout, enableWidescreen, outputFilename, stdout, stderr, startFrame, endFrame, startPaddingFrames, volume, ffmpegTimeout, dolphinTimeout, bitrate } = fillUndefinedFields(opts, DEFAULT_ARGUMENTS)
+    const { ffmpegPath, workDir, inputFile, dolphinPath, meleeIso, timeout, enableWidescreen, outputFilename, stdout, stderr, startFrame, endFrame, startPaddingFrames, volume, ffmpegTimeout, dolphinTimeout, bitrate, internalResolution } = fillUndefinedFields(opts, DEFAULT_ARGUMENTS)
     
     let killed = false
     let done = false // used to avoid sending multiple "done" events
@@ -84,9 +85,6 @@ export function createSlptoVideoProcess(opts: Partial<SlpToVideoArguments> = {})
         if (ffmpegProcess) {
             ffmpegProcess.kill(signal)
         }
-        else {
-            
-        }
 
     }
 
@@ -98,7 +96,7 @@ export function createSlptoVideoProcess(opts: Partial<SlpToVideoArguments> = {})
         startCutoffSeconds = (startFrame - _startFrame) / FRAMES_PER_SECOND
     }
 
-    const dolphinFactory = new DolphinProcessFactory({dolphinPath, slpInputFile: inputFile, workDir, meleeIso, timeout: dolphinTimeout, enableWidescreen, stdout, stderr, startFrame: _startFrame, endFrame, bitrate})
+    const dolphinFactory = new DolphinProcessFactory({dolphinPath, slpInputFile: inputFile, workDir, meleeIso, timeout: dolphinTimeout, enableWidescreen, stdout, stderr, startFrame: _startFrame, endFrame, bitrate, internalResolution})
     const dolphinProcess = dolphinFactory.spawnProcess()
 
     const ffmpegFactory = new AudioVideoMergeProcessFactory({ffmpegPath, videoFile: dolphinFactory.dumpVideoFile, audioFile: dolphinFactory.dumpAudioFile, outputFile: outputFilename, stdout, stderr, startCutoffSeconds, volume, timeout: ffmpegTimeout})

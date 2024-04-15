@@ -75,6 +75,12 @@ export class DolphinProcessFactory implements ProcessFactory {
         "8x": 11
     }
 
+    static defaultEfbScale = 4
+
+    static isValidInternalResolution(key: string) : key is keyof typeof DolphinProcessFactory.internalResToEfbScale {
+        return Object.keys(DolphinProcessFactory.internalResToEfbScale).includes(key)
+    }
+
     dolphinPath: string
     enableWidescreen : boolean
     workDir: string
@@ -84,6 +90,7 @@ export class DolphinProcessFactory implements ProcessFactory {
     timeout?: number
     inputJsonPath: string
     bitrate: number
+    efbScale: number
     stdout?: Writable
     stderr?: Writable
 
@@ -97,7 +104,7 @@ export class DolphinProcessFactory implements ProcessFactory {
     progressStart: number
     progressEnd?: number
 
-    constructor({dolphinPath, slpInputFile, workDir, meleeIso, timeout, enableWidescreen, stdout, stderr, startFrame, endFrame, bitrate}: {dolphinPath: string, slpInputFile: string, workDir: string, meleeIso: string, timeout?: number, enableWidescreen: boolean, stdout?: Writable, stderr?: Writable, startFrame?: number, endFrame?: number, bitrate: number}) {
+    constructor({dolphinPath, slpInputFile, workDir, meleeIso, timeout, enableWidescreen, stdout, stderr, startFrame, endFrame, bitrate, internalResolution}: {dolphinPath: string, slpInputFile: string, workDir: string, meleeIso: string, timeout?: number, enableWidescreen: boolean, stdout?: Writable, stderr?: Writable, startFrame?: number, endFrame?: number, bitrate: number, internalResolution: ValidInternalResolution}) {
         this.dolphinPath = dolphinPath
         this.enableWidescreen = enableWidescreen
         this.workDir = workDir
@@ -107,6 +114,8 @@ export class DolphinProcessFactory implements ProcessFactory {
         this.bitrate = bitrate
         this.stdout = stdout
         this.stderr = stderr
+
+        this.efbScale = DolphinProcessFactory.internalResToEfbScale[internalResolution]
 
         this.userDir = join(workDir, "User")
         this.inputJsonPath = join(workDir, "input.json")
@@ -145,11 +154,15 @@ export class DolphinProcessFactory implements ProcessFactory {
         const assetDolphinPath = join(ASSET_DIR, DolphinProcessFactory.dolphinIniFilename)
         const gfxIniPath = join(userConfigDir, DolphinProcessFactory.gfxIniFilename)
         const assetGfxIniPath = join(ASSET_DIR, DolphinProcessFactory.gfxIniFilename)
+
         copyFileSync(assetDolphinPath, dolphinIniPath)
 
         const gfxIniStr = readFileSync(assetGfxIniPath).toString()
         const gfxIniObj = parse(gfxIniStr)
+        
         gfxIniObj["Settings"]["BitrateKbps"] = this.bitrate.toFixed(0)
+        gfxIniObj["Settings"]["EFBScale"] = this.efbScale.toFixed(0)
+
         writeFileSync(gfxIniPath, stringify(gfxIniObj, {platform: "win32"}))
         
         if (this.enableWidescreen) {

@@ -3,7 +3,7 @@ import { FRAMES_PER_SECOND, createLoadingMessagePrinter, getDolphinPath, getFfmp
 import yargs = require("yargs");
 
 import { hideBin } from 'yargs/helpers'
-import { DEFAULT_ARGUMENTS, createSlptoVideoProcess } from "./slp-to-video";
+import { DEFAULT_ARGUMENTS, createSlptoVideoProcess, isValidInternalResolution } from "./slp-to-video";
 
 interface Arguments {
     [x: string]: unknown,
@@ -21,7 +21,8 @@ interface Arguments {
     "dolphin-path"?: string,
     "ffmpeg-path"?: string,
     "dolphin-timeout"?: number,
-    "ffmpeg-timeout"?: number
+    "ffmpeg-timeout"?: number,
+    "internal-resolution": string
 }
 
 async function parseArgv(argv : string[]) : Promise<Arguments> {
@@ -40,7 +41,8 @@ async function parseArgv(argv : string[]) : Promise<Arguments> {
         "ffmpeg-path": {type: "string", alias: "p", describe: "Path to the ffmpeg binary"},
         "dolphin-timeout": {type: "number", describe: "Maximum amount of miliseconds the Dolphin process is allowed to run"},
         "ffmpeg-timeout": {type: "number", describe: "Maximum amount of miliseconds the ffmpeg process is allowed to run"},
-        bitrate: {type: "number", alias:"b" , describe: "Bitrate used by Dolphin for the dumped frames", default: DEFAULT_ARGUMENTS.bitrate}
+        bitrate: {type: "number", alias:"b" , describe: "Bitrate used by Dolphin for the dumped frames", default: DEFAULT_ARGUMENTS.bitrate},
+        "internal-resolution": {type: "string", alias: "I", describe: "Internal resolution option (EFBScale)", default: DEFAULT_ARGUMENTS.internalResolution}
     })
     .strict()
     .parse(argv)
@@ -151,7 +153,12 @@ export async function run(argv : string[] = [], development = false) : Promise<v
             throw new Error("invalid end frame input")
         }
 
-        const {onDolphinProgress, onDolphinExit, onDone, onFfmpegDone, onFfmpegProgress, kill} = createSlptoVideoProcess({dolphinPath: dolphinPath, ffmpegPath: ffmpegPath ,inputFile: inputFile, workDir: workDir, meleeIso: meleeIso, timeout: args.timeout, outputFilename: outputPath, enableWidescreen: args.widescreen, stdout, stderr, startFrame, endFrame, volume: args.volume, bitrate: args.bitrate ,ffmpegTimeout: args["ffmpeg-timeout"], dolphinTimeout: args["dolphin-timeout"]})
+        let internalResolution = undefined
+        if (isValidInternalResolution(args["internal-resolution"])) {
+            internalResolution = args["internal-resolution"]
+        }
+
+        const {onDolphinProgress, onDolphinExit, onDone, onFfmpegDone, onFfmpegProgress, kill} = createSlptoVideoProcess({dolphinPath: dolphinPath, ffmpegPath: ffmpegPath ,inputFile: inputFile, workDir: workDir, meleeIso: meleeIso, timeout: args.timeout, outputFilename: outputPath, enableWidescreen: args.widescreen, stdout, stderr, startFrame, endFrame, volume: args.volume, bitrate: args.bitrate ,ffmpegTimeout: args["ffmpeg-timeout"], dolphinTimeout: args["dolphin-timeout"], internalResolution})
         processKill = kill
         
         if (!args.verbose) {
