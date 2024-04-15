@@ -115,13 +115,11 @@ export class DolphinProcessFactory implements ProcessFactory {
         this.stdout = stdout
         this.stderr = stderr
 
-        const efbScale = DolphinProcessFactory.internalResToEfbScale[internalResolution] as number | undefined // this is for handling arbritary strings, which could happen when used by a third party program
-        if (efbScale !== undefined) {
+        this.efbScale = DolphinProcessFactory.defaultEfbScale
+        const efbScale = DolphinProcessFactory.internalResToEfbScale[internalResolution]
+        if (efbScale !== undefined) { // this is for handling arbritary strings, which could happen when used by a third party program
             this.efbScale = efbScale
-        }   
-        else {
-            this.efbScale = DolphinProcessFactory.defaultEfbScale
-        }
+        } 
 
         this.userDir = join(workDir, "User")
         this.inputJsonPath = join(workDir, "input.json")
