@@ -38,6 +38,7 @@
   "devDependencies": {
     "@swc/cli": "^0.3.10",
     "@swc/core": "^1.4.8",
+    "@types/ini": "^4.1.0",
     "@types/mocha": "^10.0.6",
     "@types/node": "^20.11.29",
     "@types/which": "^3.0.3",
@@ -50,6 +51,7 @@
   },
   "dependencies": {
     "@slippi/slippi-js": "^6.7.0",
+    "ini": "^4.1.2",
     "which": "^4.0.0",
     "yargs": "^17.7.2"
   }

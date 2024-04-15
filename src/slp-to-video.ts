@@ -22,7 +22,8 @@ type SlpToVideoArguments = {
     startFrame?: number,
     endFrame?: number,
     startPaddingFrames: number,
-    volume: number
+    volume: number,
+    bitrate: number
 }
 
 export const DEFAULT_ARGUMENTS : Readonly<SlpToVideoArguments> = {
@@ -42,7 +43,8 @@ export const DEFAULT_ARGUMENTS : Readonly<SlpToVideoArguments> = {
     startFrame: undefined,
     endFrame: undefined,
     startPaddingFrames: 120,
-    volume: 0.25
+    volume: 0.25,
+    bitrate: 25000
 }
 
 export function createSlptoVideoProcess(opts: Partial<SlpToVideoArguments> = {}) {
@@ -61,7 +63,7 @@ export function createSlptoVideoProcess(opts: Partial<SlpToVideoArguments> = {})
         opts.ffmpegPath = ffmpegPath
     }
 
-    const { ffmpegPath, workDir, inputFile, dolphinPath, meleeIso, timeout, enableWidescreen, outputFilename, stdout, stderr, startFrame, endFrame, startPaddingFrames, volume, ffmpegTimeout, dolphinTimeout } = fillUndefinedFields(opts, DEFAULT_ARGUMENTS)
+    const { ffmpegPath, workDir, inputFile, dolphinPath, meleeIso, timeout, enableWidescreen, outputFilename, stdout, stderr, startFrame, endFrame, startPaddingFrames, volume, ffmpegTimeout, dolphinTimeout, bitrate } = fillUndefinedFields(opts, DEFAULT_ARGUMENTS)
     
     let killed = false
     let done = false // used to avoid sending multiple "done" events
@@ -96,7 +98,7 @@ export function createSlptoVideoProcess(opts: Partial<SlpToVideoArguments> = {})
         startCutoffSeconds = (startFrame - _startFrame) / FRAMES_PER_SECOND
     }
 
-    const dolphinFactory = new DolphinProcessFactory({dolphinPath, slpInputFile: inputFile, workDir, meleeIso, timeout: dolphinTimeout, enableWidescreen, stdout, stderr, startFrame: _startFrame, endFrame})
+    const dolphinFactory = new DolphinProcessFactory({dolphinPath, slpInputFile: inputFile, workDir, meleeIso, timeout: dolphinTimeout, enableWidescreen, stdout, stderr, startFrame: _startFrame, endFrame, bitrate})
     const dolphinProcess = dolphinFactory.spawnProcess()
 
     const ffmpegFactory = new AudioVideoMergeProcessFactory({ffmpegPath, videoFile: dolphinFactory.dumpVideoFile, audioFile: dolphinFactory.dumpAudioFile, outputFile: outputFilename, stdout, stderr, startCutoffSeconds, volume, timeout: ffmpegTimeout})

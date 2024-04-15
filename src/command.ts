@@ -17,6 +17,7 @@ interface Arguments {
     from?: string,
     to?: string,
     volume: number,
+    bitrate: number,
     "dolphin-path"?: string,
     "ffmpeg-path"?: string,
     "dolphin-timeout"?: number,
@@ -38,7 +39,8 @@ async function parseArgv(argv : string[]) : Promise<Arguments> {
         "dolphin-path": {type: "string", alias: "d", describe: "Path of the Playback Dolphin binary"},
         "ffmpeg-path": {type: "string", alias: "p", describe: "Path to the ffmpeg binary"},
         "dolphin-timeout": {type: "number", describe: "Maximum amount of miliseconds the Dolphin process is allowed to run"},
-        "ffmpeg-timeout": {type: "number", describe: "Maximum amount of miliseconds the ffmpeg process is allowed to run"}
+        "ffmpeg-timeout": {type: "number", describe: "Maximum amount of miliseconds the ffmpeg process is allowed to run"},
+        bitrate: {type: "number", alias:"b" , describe: "Bitrate used by Dolphin for the dumped frames", default: DEFAULT_ARGUMENTS.bitrate}
     })
     .strict()
     .parse(argv)
@@ -149,7 +151,7 @@ export async function run(argv : string[] = [], development = false) : Promise<v
             throw new Error("invalid end frame input")
         }
 
-        const {onDolphinProgress, onDolphinExit, onDone, onFfmpegDone, onFfmpegProgress, kill} = createSlptoVideoProcess({dolphinPath: dolphinPath, ffmpegPath: ffmpegPath ,inputFile: inputFile, workDir: workDir, meleeIso: meleeIso, timeout: args.timeout, outputFilename: outputPath, enableWidescreen: args.widescreen, stdout, stderr, startFrame, endFrame, volume: args.volume, ffmpegTimeout: args["ffmpeg-timeout"], dolphinTimeout: args["dolphin-timeout"]})
+        const {onDolphinProgress, onDolphinExit, onDone, onFfmpegDone, onFfmpegProgress, kill} = createSlptoVideoProcess({dolphinPath: dolphinPath, ffmpegPath: ffmpegPath ,inputFile: inputFile, workDir: workDir, meleeIso: meleeIso, timeout: args.timeout, outputFilename: outputPath, enableWidescreen: args.widescreen, stdout, stderr, startFrame, endFrame, volume: args.volume, bitrate: args.bitrate ,ffmpegTimeout: args["ffmpeg-timeout"], dolphinTimeout: args["dolphin-timeout"]})
         processKill = kill
         
         if (!args.verbose) {

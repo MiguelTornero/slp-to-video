@@ -1,10 +1,11 @@
 import { EventEmitter } from "node:events";
 import { ExternalProcess, ProcessEventEmmiter, ProcessFactory, ASSET_DIR } from "./common";
 import { join } from "node:path";
-import { copyFileSync, mkdirSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { spawn } from "node:child_process";
 import { Writable } from "node:stream";
 import { SlippiGame, Frames } from "@slippi/slippi-js";
+import { parse, stringify } from "ini";
 
 type ValidInternalResultionMultiplier = 1 | 1.5 | 2 | 2.5 | 3 | 4 | 5 | 6 | 7 | 8
 export type ValidInternalResolution = `${ValidInternalResultionMultiplier}x` | "720p" | "1080p"  | "WQHD" | "4K" | "auto"
@@ -82,6 +83,7 @@ export class DolphinProcessFactory implements ProcessFactory {
     meleeIso: string
     timeout?: number
     inputJsonPath: string
+    bitrate: number
     stdout?: Writable
     stderr?: Writable
 
@@ -95,13 +97,14 @@ export class DolphinProcessFactory implements ProcessFactory {
     progressStart: number
     progressEnd?: number
 
-    constructor({dolphinPath, slpInputFile, workDir, meleeIso, timeout, enableWidescreen, stdout, stderr, startFrame, endFrame}: {dolphinPath: string, slpInputFile: string, workDir: string, meleeIso: string, timeout?: number, enableWidescreen: boolean, stdout?: Writable, stderr?: Writable, startFrame?: number, endFrame?: number}) {
+    constructor({dolphinPath, slpInputFile, workDir, meleeIso, timeout, enableWidescreen, stdout, stderr, startFrame, endFrame, bitrate}: {dolphinPath: string, slpInputFile: string, workDir: string, meleeIso: string, timeout?: number, enableWidescreen: boolean, stdout?: Writable, stderr?: Writable, startFrame?: number, endFrame?: number, bitrate: number}) {
         this.dolphinPath = dolphinPath
         this.enableWidescreen = enableWidescreen
         this.workDir = workDir
         this.slpInputFile = slpInputFile
         this.meleeIso = meleeIso
         this.timeout = timeout
+        this.bitrate = bitrate
         this.stdout = stdout
         this.stderr = stderr
 
@@ -138,9 +141,17 @@ export class DolphinProcessFactory implements ProcessFactory {
         mkdirSync(this.workDir, {recursive: true}) // "recursive: true" makes it so it doesn't throw an error if the dir exists
 
         mkdirSync(userConfigDir, {recursive: true})
-        copyFileSync(join(ASSET_DIR, DolphinProcessFactory.dolphinIniFilename), join(userConfigDir, DolphinProcessFactory.dolphinIniFilename))
-        copyFileSync(join(ASSET_DIR, DolphinProcessFactory.gfxIniFilename), join(userConfigDir, DolphinProcessFactory.gfxIniFilename))
+        const dolphinIniPath = join(userConfigDir, DolphinProcessFactory.dolphinIniFilename)
+        const assetDolphinPath = join(ASSET_DIR, DolphinProcessFactory.dolphinIniFilename)
+        const gfxIniPath = join(userConfigDir, DolphinProcessFactory.gfxIniFilename)
+        const assetGfxIniPath = join(ASSET_DIR, DolphinProcessFactory.gfxIniFilename)
+        copyFileSync(assetDolphinPath, dolphinIniPath)
 
+        const gfxIniStr = readFileSync(assetGfxIniPath).toString()
+        const gfxIniObj = parse(gfxIniStr)
+        gfxIniObj["Settings"]["BitrateKbps"] = this.bitrate.toFixed(0)
+        writeFileSync(gfxIniPath, stringify(gfxIniObj, {platform: "win32"}))
+        
         if (this.enableWidescreen) {
             const userGameSettingsDir = join(this.userDir, "GameSettings")
     
