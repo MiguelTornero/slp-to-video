@@ -1,9 +1,14 @@
+/**
+ * This module contains the logic used for running the program in the command line.
+ * This is the only file that should be able to exit the program or print stuff on the terminal.
+ */
 import { access, constants, rm } from "fs/promises";
 import { FRAMES_PER_SECOND, createLoadingMessagePrinter, getDolphinPath, getFfmpegPath, getWorkDir, msToTimestamp, parseTimeStamp, toAbsolutePath } from "./common";
 import yargs = require("yargs");
 
 import { hideBin } from 'yargs/helpers'
 import { DEFAULT_ARGUMENTS, createSlptoVideoProcess, isValidInternalResolution } from "./slp-to-video";
+import { DolphinProcessFactory } from "./dolphin";
 
 interface Arguments {
     [x: string]: unknown,
@@ -25,6 +30,11 @@ interface Arguments {
     "internal-resolution": string
 }
 
+/**
+ * Parses a trimmed argv (without the binary)
+ * @param argv The process.argv without the node binary or script file name
+ * @returns 
+ */
 async function parseArgv(argv : string[]) : Promise<Arguments> {
     return await yargs().command("$0 <slp_file>", "Converts SLP files to video files").options({
         h: {type: "boolean", alias: "help"},
@@ -42,7 +52,7 @@ async function parseArgv(argv : string[]) : Promise<Arguments> {
         "dolphin-timeout": {type: "number", describe: "Maximum amount of miliseconds the Dolphin process is allowed to run"},
         "ffmpeg-timeout": {type: "number", describe: "Maximum amount of miliseconds the ffmpeg process is allowed to run"},
         bitrate: {type: "number", alias:"b" , describe: "Bitrate used by Dolphin for the dumped frames", default: DEFAULT_ARGUMENTS.bitrate},
-        "internal-resolution": {type: "string", alias: "I", describe: "Internal resolution option (EFBScale)", default: DEFAULT_ARGUMENTS.internalResolution}
+        "internal-resolution": {type: "string", alias: "I", describe: `Internal resolution option (${DolphinProcessFactory.validInteralResolutionList.join(", ")})`, default: DEFAULT_ARGUMENTS.internalResolution}
     })
     .strict()
     .parse(argv)

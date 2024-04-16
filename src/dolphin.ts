@@ -77,6 +77,8 @@ export class DolphinProcessFactory implements ProcessFactory {
 
     static defaultEfbScale = 4
 
+    static validInteralResolutionList = Object.keys(DolphinProcessFactory.internalResToEfbScale) as ValidInternalResolution[]
+
     static isValidInternalResolution(key: string) : key is keyof typeof DolphinProcessFactory.internalResToEfbScale {
         return Object.keys(DolphinProcessFactory.internalResToEfbScale).includes(key)
     }
@@ -115,9 +117,9 @@ export class DolphinProcessFactory implements ProcessFactory {
         this.stdout = stdout
         this.stderr = stderr
 
-        this.efbScale = DolphinProcessFactory.defaultEfbScale
+        this.efbScale = DolphinProcessFactory.defaultEfbScale // this is for handling arbritary strings, which could happen when used by a third party program
         const efbScale = DolphinProcessFactory.internalResToEfbScale[internalResolution]
-        if (efbScale !== undefined) { // this is for handling arbritary strings, which could happen when used by a third party program
+        if (efbScale !== undefined) {
             this.efbScale = efbScale
         } 
 

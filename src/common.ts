@@ -1,3 +1,6 @@
+/**
+ * This module contains generic code that could be used in more than one module
+ */
 import { mkdtempSync, existsSync, mkdirSync, accessSync, constants } from "node:fs"
 import { homedir, tmpdir, userInfo } from "node:os"
 import { isAbsolute, join } from "node:path"
