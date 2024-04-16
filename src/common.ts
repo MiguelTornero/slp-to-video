@@ -31,6 +31,11 @@ export interface ProcessFactory {
     spawnProcess() : ExternalProcess
 }
 
+export type IniFile = {[key: string]: (string | IniFile | undefined)}
+declare module "ini" {
+    function parse(str: string): IniFile
+}
+
 export function getWorkDir(development = false, prefix = "slp-to-video-") {
     let _tempDir = ""
     if (development) {

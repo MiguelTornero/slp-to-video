@@ -164,6 +164,9 @@ export class DolphinProcessFactory implements ProcessFactory {
         const gfxIniStr = readFileSync(assetGfxIniPath).toString()
         const gfxIniObj = parse(gfxIniStr)
         
+        if (gfxIniObj["Settings"] === undefined || typeof gfxIniObj["Settings"] === "string") {
+            gfxIniObj["Settings"] = {}
+        }
         gfxIniObj["Settings"]["BitrateKbps"] = this.bitrate.toFixed(0)
         gfxIniObj["Settings"]["EFBScale"] = this.efbScale.toFixed(0)
 
