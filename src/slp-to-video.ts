@@ -52,6 +52,8 @@ export const DEFAULT_ARGUMENTS : Readonly<SlpToVideoArguments> = {
 
 export const isValidInternalResolution = DolphinProcessFactory.isValidInternalResolution
 
+export const validInternalResolutionList = DolphinProcessFactory.validInteralResolutionList
+
 export function createSlptoVideoProcess(opts: Partial<SlpToVideoArguments> = {}) {
     if (opts.dolphinPath === undefined) {
         const dolphinPath = getDolphinPath(false)
