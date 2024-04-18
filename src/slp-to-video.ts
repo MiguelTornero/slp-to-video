@@ -1,3 +1,7 @@
+/**
+ * This file contains the logic that coordinates the Dolphin and FFMPEG processes.
+ * It exports functions that are meant to be used by third party programs, and therefore shouldn't aassume it's being run at the command line.
+ */
 import { ProcessEventEmmiter, fillUndefinedFields, ProgressCallback, FRAMES_PER_SECOND, getDolphinPath, getFfmpegPath, ExternalProcess } from "./common"
 import { EventEmitter, Writable } from "stream"
 import { DolphinProcessFactory, ValidInternalResolution } from "./dolphin"

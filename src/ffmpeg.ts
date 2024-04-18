@@ -1,3 +1,6 @@
+/**
+ * This file has all the logic associated with the Playback FFMPEG process.
+ */
 import { spawn } from "node:child_process"
 import { ExternalProcess, ProcessEventEmmiter, ProcessFactory, parseTimeStamp } from "./common"
 import { EventEmitter, Writable } from "node:stream"

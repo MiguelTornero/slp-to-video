@@ -1,5 +1,5 @@
 /**
- * This module contains the logic used for running the program in the command line.
+ * This module contains the logic used for running the program in the command line, like parsing argv, etc.
  * This is the only file that should be able to exit the program or print stuff on the terminal.
  */
 import { access, constants, rm } from "fs/promises";
@@ -47,7 +47,7 @@ async function parseArgv(argv : string[]) : Promise<Arguments> {
         from: {type: "string", alias: "f", describe: "The frame you would like to start the replay on. Can also be provided as a timestamp with the format MM:SS"},
         to: {type: "string", alias: "t", describe: "The frame you would like to end the replay on. Can also be provided as a timestamp with the format MM:SS"},
         volume: {type: "number", alias: "V", describe: "Volume multipier for the output file", default: DEFAULT_ARGUMENTS.volume},
-        "dolphin-path": {type: "string", alias: "d", describe: "Path of the Playback Dolphin binary"},
+        "dolphin-path": {type: "string", alias: "d", describe: "Path to the Playback Dolphin binary"},
         "ffmpeg-path": {type: "string", alias: "p", describe: "Path to the ffmpeg binary"},
         "dolphin-timeout": {type: "number", describe: "Maximum amount of miliseconds the Dolphin process is allowed to run"},
         "ffmpeg-timeout": {type: "number", describe: "Maximum amount of miliseconds the ffmpeg process is allowed to run"},

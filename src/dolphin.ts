@@ -1,3 +1,6 @@
+/**
+ * This file has all the logic associated with the Playback Dolphin process.
+ */
 import { EventEmitter } from "node:events";
 import { ExternalProcess, ProcessEventEmmiter, ProcessFactory, ASSET_DIR } from "./common";
 import { join } from "node:path";
