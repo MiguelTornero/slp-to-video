@@ -16,7 +16,7 @@ For the moment, this project is only available by cloning the repository (a stan
 ```bash
 git clone https://github.com/MiguelTornero/slp-to-video.git
 ```
-To install the NPM dependencies (which include the FFMPEG binary), run the following command (see instructions below if you don't wish to install this binary):
+To install the NPM dependencies (which include the FFMPEG binary), run the following command (see instructions below if you don't wish to install the FFMPEG binary):
 ```bash
 npm install
 ```
@@ -24,7 +24,7 @@ Due to this being a Typescript project, an extra build step is required. This is
 ```bash
 npm run build
 ```
-To make the `slp-to-video` commanda accesible from the command line, run this command to link the package:
+To make the `slp-to-video` command accesible from the command line, run this command to link the package globally:
 ```bash
 npm link
 ```
@@ -38,18 +38,18 @@ This project includes [node-ffmpeg-installer](https://github.com/kribblo/node-ff
 ```bash
 npm install --no-optional
 ```
-Otherwise, if you are fine with using the provided FFMPEG binary (or don't have FFMPEG installed), simply install the depedencies as normal.
+If the FFMPEG binary is not installed by NPM, this tool will fallback to a local FFMPEG installation. Specifying the path to the FFMPEG binary using the `--ffmpeg-path` option overrides this behaviour.
 
 ### Playback Dolphin
 If you want to use the custom Dolphin Playback binary developed for this project that removes the frame limiter (resulting in faster conversions), you can initiate the Git submodule using the following command:
 ```bash
 git submodule update --init --recursive
 ```
-After that, follow the build instructions in `Ishiiruka/Readme.md` to build the binary. This tool will look for the built binary in the default build directory.  
+After that, follow the build instructions in the `Readme.md` file inside the `Ishiiruka` directory to build the binary. This tool will look for the built binary in the default build output directory.  
 
-If you already have a pre-built binary that you externally, you can just drop it in the `assets` directory.  
+If you already have a pre-built binary that you got externally, you can just drop it in the `assets` directory or use the `--dolphin-path` option while running the command.  
 
-If a Playback Dolphin binary is not found in the `Ishiiruka` build subdirectory, or in the `assets` directory, this tool will automatically look for a local [Slippi Launcher](https://slippi.gg/) installation as a fallback.
+If a Playback Dolphin binary is not found using the previous methods, this tool will automatically look for a local [Slippi Launcher](https://slippi.gg/) installation as a fallback.
 
 ## How to use
 This tool exposes the following `slp-to-video` command:
@@ -101,7 +101,7 @@ To facilitate development, a script file that runs the Typescript directly with 
 ```bash
 ./bin/dev.ts input.slp
 ```
-Be sure to manually empty the `tmp` directory after running this file to avoid wasting unnecessary disk space.
+Be sure to empty the `tmp` directory after running this to avoid unnecessarily wasting disk space.
 
 ### Usage examples
 ```bash
