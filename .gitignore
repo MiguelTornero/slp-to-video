@@ -15,7 +15,11 @@ tsconfig.tsbuildinfo
 *.mp4
 *.webm
 
+#input files
+/*.slp
+
 *.old
+pnpm-lock.yaml
 
 # bundled binaries
 /assets/ffmpeg*
