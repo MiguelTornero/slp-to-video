@@ -36,7 +36,7 @@ interface Arguments {
  * @returns 
  */
 async function parseArgv(argv : string[]) : Promise<Arguments> {
-    return await yargs().command("$0 <slp_file>", "Converts SLP files to video files").options({
+    return await yargs().command("$0 <slp_file>", "Converts the slp_file to a video file").options({
         h: {type: "boolean", alias: "help"},
         slp_file: {type: "string", demandOption: true, hidden: true}, // same as first positional arg, needed for proper typescript type inference, hidden
         iso: {type: "string", alias: "i", describe: "Path to the Melee ISO", default: DEFAULT_ARGUMENTS.meleeIso},
