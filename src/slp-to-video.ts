@@ -2,7 +2,7 @@
  * This file contains the logic that coordinates the Dolphin and FFMPEG processes.
  * It exports functions that are meant to be used by third party programs, and therefore shouldn't aassume it's being run at the command line.
  */
-import { ProcessEventEmmiter, fillUndefinedFields, ProgressCallback, FRAMES_PER_SECOND, getDolphinPath, getFfmpegPath, ExternalProcess } from "./common"
+import { ProcessEventEmmiter, fillUndefinedFields, ProgressCallback, FRAMES_PER_SECOND, getDolphinPath, getFfmpegPath, ExternalProcess, ExitCallback } from "./common"
 import { EventEmitter, Writable } from "stream"
 import { DolphinProcessFactory, ValidInternalResolution } from "./dolphin"
 import { AudioVideoMergeProcessFactory } from "./ffmpeg"
@@ -54,7 +54,19 @@ export const isValidInternalResolution = DolphinProcessFactory.isValidInternalRe
 
 export const validInternalResolutionList = DolphinProcessFactory.validInteralResolutionList
 
-export function createSlptoVideoProcess(opts: Partial<SlpToVideoArguments> = {}) {
+/**
+ * Spawns the process that converts the SLP file to a video file.
+ * @param opts Options for the process. Undefined values will be filled by default values.
+ * @returns
+ */
+export function createSlptoVideoProcess(opts: Partial<SlpToVideoArguments> = {}) : {
+    onDolphinDone: (callback: ExitCallback) => void,
+    onFfmpegDone: (callback: ExitCallback) => void,
+    onDolphinProgress: (callback: ProgressCallback) => void,
+    onFfmpegProgress: (callback: ProgressCallback) => void,
+    onDone: (callback: ExitCallback) => void,
+    kill: () => void
+} {
     if (opts.dolphinPath === undefined) {
         const dolphinPath = getDolphinPath(false)
         if (dolphinPath === null) {
@@ -142,20 +154,18 @@ export function createSlptoVideoProcess(opts: Partial<SlpToVideoArguments> = {})
         onDolphinProgress(callback: ProgressCallback) {
             dolphinProcess.onProgress(callback)
         },
-        onDolphinExit(callback: (code: number | null) => void) {
+        onDolphinDone(callback: ExitCallback) {
             dolphinProcess.onExit(callback)
         },
         onFfmpegProgress(callback: ProgressCallback) {
             ffmpegEventEmitter.on("progress", callback)
         },
-        onFfmpegDone(callback: (code: number | null) => void) {
+        onFfmpegDone(callback: ExitCallback) {
             ffmpegEventEmitter.on("done", callback)
         },
-        onDone(callback: (code: number|null) => void) {
+        onDone(callback: ExitCallback) {
             overallEventEmitter.on("done", callback)
         },
-        kill,
-        startFrame: dolphinFactory.startFrame,
-        endFrame: dolphinFactory.endFrame
+        kill
     }
 }

@@ -168,7 +168,7 @@ export async function run(argv : string[] = [], development = false) : Promise<v
             internalResolution = args["internal-resolution"]
         }
 
-        const {onDolphinProgress, onDolphinExit, onDone, onFfmpegDone, onFfmpegProgress, kill} = createSlptoVideoProcess({dolphinPath: dolphinPath, ffmpegPath: ffmpegPath ,inputFile: inputFile, workDir: workDir, meleeIso: meleeIso, timeout: args.timeout, outputFilename: outputPath, enableWidescreen: args.widescreen, stdout, stderr, startFrame, endFrame, volume: args.volume, bitrate: args.bitrate ,ffmpegTimeout: args["ffmpeg-timeout"], dolphinTimeout: args["dolphin-timeout"], internalResolution})
+        const {onDolphinProgress, onDolphinDone, onDone, onFfmpegDone, onFfmpegProgress, kill} = createSlptoVideoProcess({dolphinPath: dolphinPath, ffmpegPath: ffmpegPath ,inputFile: inputFile, workDir: workDir, meleeIso: meleeIso, timeout: args.timeout, outputFilename: outputPath, enableWidescreen: args.widescreen, stdout, stderr, startFrame, endFrame, volume: args.volume, bitrate: args.bitrate ,ffmpegTimeout: args["ffmpeg-timeout"], dolphinTimeout: args["dolphin-timeout"], internalResolution})
         processKill = kill
         
         if (!args.verbose) {
@@ -192,7 +192,7 @@ export async function run(argv : string[] = [], development = false) : Promise<v
             })
         }
 
-        onDolphinExit((exitCode) => {
+        onDolphinDone((exitCode) => {
             if (!args.verbose) {
                 process.stdout.write("\n")
             }

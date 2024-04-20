@@ -13,9 +13,10 @@ const HOME = homedir()
 const PLATFORM = process.platform
 
 export type ProgressCallback = (progress: number, start: number, end?: number) => void
+export type ExitCallback = (code: number | null) => void
 
 export interface ExternalProcess {
-    onExit(callback: (code: number|null) => void): void
+    onExit(callback: ExitCallback): void
     onProgress(callback: ProgressCallback): void
     kill(signal?: NodeJS.Signals | number): void
 }
