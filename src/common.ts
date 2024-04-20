@@ -8,6 +8,18 @@ import { Writable } from "node:stream"
 import { APPDATA, DOLPHIN_PATH, FFMPEG_PATH } from "./env"
 import which = require("which")
 
+let ffmpeg_import : {
+    path: string;
+    version: string;
+    url: string;
+} | null = null
+try {
+    ffmpeg_import = require('@ffmpeg-installer/ffmpeg')
+}
+catch {
+    ffmpeg_import = null
+}
+
 const CWD = process.cwd()
 const HOME = homedir()
 const PLATFORM = process.platform
@@ -302,6 +314,10 @@ export function getFfmpegPath(platform = PLATFORM) {
         return FFMPEG_PATH
     }
     
+    if (ffmpeg_import !== null) {
+        return ffmpeg_import.path
+    }
+
     let ffmpeg = "ffmpeg"
     if (platform === "win32") {
         ffmpeg += ".exe"

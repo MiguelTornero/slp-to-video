@@ -35,6 +35,9 @@
     "/dist",
     "/assets"
   ],
+  "optionalDependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.1.0"
+  },
   "devDependencies": {
     "@swc/cli": "^0.3.10",
     "@swc/core": "^1.4.8",

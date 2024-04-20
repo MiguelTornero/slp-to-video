@@ -1,4 +1,4 @@
-#!/usr/bin/env -S node_modules/.bin/ts-node --swc
+#!/usr/bin/env node_modules/.bin/ts-node
 
 (async function () {
     const { run } = await import("../src/index")
