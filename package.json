@@ -1,6 +1,6 @@
 {
   "name": "slp-to-video",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "CLI tool for converting Slippi SLP files to video (without the use of OBS)",
   "main": "./dist/index.js",
   "types": "dist/index.d.ts",
