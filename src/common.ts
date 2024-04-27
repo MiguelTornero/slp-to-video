@@ -3,7 +3,7 @@
  */
 import { mkdtempSync, existsSync, mkdirSync, accessSync, constants } from "node:fs"
 import { homedir, tmpdir, userInfo } from "node:os"
-import { isAbsolute, join } from "node:path"
+import { dirname, isAbsolute, join } from "node:path"
 import { Writable } from "node:stream"
 import { APPDATA, DOLPHIN_PATH, FFMPEG_PATH } from "./env"
 import which = require("which")
@@ -20,9 +20,22 @@ catch {
     ffmpeg_import = null
 }
 
+// process.pkg exists if this is being run as a packaged binary
+declare global {
+    namespace NodeJS {
+        interface Process {
+            pkg: any
+        }
+    }
+}
+
 const CWD = process.cwd()
 const HOME = homedir()
 const PLATFORM = process.platform
+const ROOT_DIRNAME = process.pkg ? 
+    join(dirname(isAbsolute(process.argv0) ? process.argv0 : join(CWD, process.argv0))) :
+    join(__dirname, "..")
+const EXTERNALS_DIRNAME = join(ROOT_DIRNAME, "externals")
 
 export type ProgressCallback = (progress: number, start: number, end?: number) => void
 export type ExitCallback = (code: number | null) => void
@@ -256,9 +269,9 @@ export function getLocalSlippiBinary(platform: NodeJS.Platform) {
     }
 }
 
-const WIN_BUNDLED_BIN = join(ASSET_DIR, DEFAULT_WIN_BIN_NAME)
-const MAC_BUNDLED_BIN = join(ASSET_DIR, DEFAULT_MAC_BIN_NAME)
-const LINUX_BUNDLED_BIN = join(ASSET_DIR, DEFAULT_APPIMAGE_NAME)
+const WIN_BUNDLED_BIN = join(EXTERNALS_DIRNAME, DEFAULT_WIN_BIN_NAME)
+const MAC_BUNDLED_BIN = join(EXTERNALS_DIRNAME, DEFAULT_MAC_BIN_NAME)
+const LINUX_BUNDLED_BIN = join(EXTERNALS_DIRNAME, DEFAULT_APPIMAGE_NAME)
 export function getBundledDolphinBinary(platform: NodeJS.Platform) {
     switch (platform) {
         case "win32":
@@ -279,6 +292,7 @@ export function getBundledDolphinBinary(platform: NodeJS.Platform) {
     }
 }
 
+export const PLACKBACK_CMD = "dolphin-emu-playback"
 export function getDolphinPath(development = false, platform: NodeJS.Platform = PLATFORM) {
     // checking env first
     if (DOLPHIN_PATH) {
@@ -305,7 +319,7 @@ export function getDolphinPath(development = false, platform: NodeJS.Platform = 
     }
 
     // checking PATH as last resort
-    return which.sync("slippi-playback", {nothrow: true})
+    return which.sync(PLACKBACK_CMD, {nothrow: true})
 }
 
 export function getFfmpegPath(platform = PLATFORM) {
@@ -324,7 +338,7 @@ export function getFfmpegPath(platform = PLATFORM) {
     }
 
     // checking if bundled
-    let ffmpegPath = join(ASSET_DIR, ffmpeg)
+    let ffmpegPath = join(EXTERNALS_DIRNAME, ffmpeg)
     if (checkFileExists(ffmpegPath, true, true)) {
         return ffmpegPath
     }

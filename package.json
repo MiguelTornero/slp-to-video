@@ -46,6 +46,7 @@
     "@types/node": "^20.11.29",
     "@types/which": "^3.0.3",
     "@types/yargs": "^17.0.32",
+    "@yao-pkg/pkg": "^5.11.5",
     "fancy-test": "^3.0.14",
     "mocha": "^10.3.0",
     "shx": "^0.3.4",
@@ -57,5 +58,9 @@
     "ini": "^4.1.2",
     "which": "^4.0.0",
     "yargs": "^17.7.2"
+  },
+  "pkg": {
+    "scripts": "dist/**/*.js",
+    "assets": "assets/**/*"
   }
 }

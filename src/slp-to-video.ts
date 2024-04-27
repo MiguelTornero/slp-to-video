@@ -2,7 +2,7 @@
  * This file contains the logic that coordinates the Dolphin and FFMPEG processes.
  * It exports functions that are meant to be used by third party programs, and therefore shouldn't aassume it's being run at the command line.
  */
-import { ProcessEventEmmiter, fillUndefinedFields, ProgressCallback, FRAMES_PER_SECOND, getDolphinPath, getFfmpegPath, ExternalProcess, ExitCallback } from "./common"
+import { ProcessEventEmmiter, fillUndefinedFields, ProgressCallback, FRAMES_PER_SECOND, getDolphinPath, getFfmpegPath, ExternalProcess, ExitCallback, PLACKBACK_CMD } from "./common"
 import { EventEmitter, Writable } from "stream"
 import { DolphinProcessFactory, ValidInternalResolution } from "./dolphin"
 import { AudioVideoMergeProcessFactory } from "./ffmpeg"
@@ -33,7 +33,7 @@ export const DEFAULT_ARGUMENTS : Readonly<SlpToVideoArguments> = {
     inputFile: "input.slp",
     workDir: "tmp",
     meleeIso: "SSBM.iso",
-    dolphinPath: "slippi-playback",
+    dolphinPath: PLACKBACK_CMD,
     ffmpegPath: "ffmpeg",
     internalResolution: "720p",
     outputFilename: "output.avi",
